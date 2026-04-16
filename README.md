@@ -1,28 +1,68 @@
-# Dynamic Snippets
+<div align="center">
 
-Save, organize, and instantly paste reusable text snippets with dynamic variables. Boost your productivity with folders, templates, and one-click insertion.
+# ⚡ Dynamic Snippets
 
-## Features
+**Save, organize, and instantly paste reusable text snippets with dynamic variables.**
 
-- **Snippet Management** — Create and organize snippets in a hierarchical folder tree
-- **Dynamic Variables** — Insert dropdown selectors (`${{key|opt1,opt2}}`) and text inputs (`${key|default}`) that prompt for values on paste
-- **Context Menu Insertion** — Right-click any editable field to paste snippets, organized by folder
-- **Variable Builder** — Visual modal to create variable tokens without memorizing syntax
-- **Auto-Save** — Changes are debounced and saved automatically with a live status indicator
-- **Built-in Templates** — Ships with starter snippets (bug reports, PR checklists, message templates)
-- **Persistent Storage** — Syncs via Chrome storage API across sessions
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Get_Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![Built With](https://img.shields.io/badge/Built_With-Vue_3-42b883?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 
-## Getting Started
+<br />
+
+<img src="images/Welcome.png" alt="Dynamic Snippets Welcome" width="600" />
+
+</div>
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 📁 **Folder Tree** | Organize snippets in a draggable, nested folder structure |
+| 🔀 **Dynamic Variables** | Dropdown selectors (`${{key\|opt1,opt2}}`) and text inputs (`${key\|default}`) that prompt at paste time |
+| 🖱️ **Right-Click Insert** | Paste any snippet from the context menu on any website |
+| 🛠️ **Variable Builder** | Visual modal to create variable tokens — no syntax to memorize |
+| 💾 **Auto-Save** | Configurable debounce with a live save status indicator |
+| 🎨 **Dark & Light Themes** | Switch between themes from the settings panel |
+| 📦 **Import / Export** | Back up or share your entire snippet library as JSON |
+| 📋 **Built-in Templates** | Starter snippets for bug reports, PR checklists, and message templates |
+
+## 📸 Screenshots
+
+<div align="center">
+<table>
+<tr>
+<td align="center"><img src="images/Snippet.png" width="380" /><br /><b>Snippet Editor</b></td>
+<td align="center"><img src="images/Var.png" width="380" /><br /><b>Variable Builder</b></td>
+</tr>
+<tr>
+<td align="center"><img src="images/Var-input.png" width="380" /><br /><b>Variable Input Prompt</b></td>
+<td align="center"><img src="images/Welcome.png" width="380" /><br /><b>Welcome Screen</b></td>
+</tr>
+</table>
+</div>
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- [Node.js](https://nodejs.org/) 18+
 - npm
 
-### Install
+### Install & Build
 
 ```bash
+# Clone the repo
+git clone https://github.com/Chosen-Marsh/Dynamic-snippets.git
+cd Dynamic-snippets
+
+# Install dependencies
 npm install
+
+# Build for production
+npm run build
 ```
 
 ### Development
@@ -31,19 +71,33 @@ npm install
 npm run dev
 ```
 
-### Build
+### Load in Browser
 
-```bash
-npm run build
+1. **Chrome** — Go to `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the `dist` folder
+2. **Edge** — Go to `edge://extensions` → enable **Developer mode** → **Load unpacked** → select the `dist` folder
+
+## 🧩 How It Works
+
+```
+1. Click the extension icon to open the snippet manager
+2. Create folders and snippets, add variables if needed
+3. Right-click any text field on any page → pick your snippet
+4. Fill in variable prompts → text is inserted instantly
 ```
 
-## Load in Browser
+## 🏗️ Tech Stack
 
-1. **Chrome** — Navigate to `chrome://extensions`, enable Developer mode, click **Load unpacked**, and select the `dist` folder.
-2. **Edge** — Navigate to `edge://extensions`, enable Developer mode, click **Load unpacked**, and select the `dist` folder.
+| Technology | Purpose |
+|---|---|
+| [Vue 3](https://vuejs.org/) | Reactive UI with Composition API |
+| [Vite](https://vite.dev/) | Lightning-fast build tooling |
+| Chrome Extension MV3 | Service worker, context menus, scripting API |
+| `chrome.storage.local` | Local persistence — no external servers |
 
-## Tech Stack
+## 🔒 Privacy
 
-- Vue 3
-- Vite
-- Chrome Extension Manifest V3
+Dynamic Snippets collects **zero user data**. Everything is stored locally in your browser. See the full [Privacy Policy](PRIVACY.md).
+
+## 📄 License
+
+MIT © [Marsh](https://github.com/Chosen-Marsh)
