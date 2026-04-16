@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynamic Snippets – Small Tile 440×280</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 440px;
+    height: 280px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #080d14;
+  }
+  .canvas {
+    width: 440px;
+    height: 280px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #080d14 0%, #0d1520 30%, #0f1a2e 60%, #0a1222 100%);
+  }
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    z-index: 0;
+  }
+  .glow-1 {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
+    top: -80px;
+    left: -60px;
+  }
+  .glow-2 {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.05) 0%, transparent 70%);
+    bottom: -80px;
+    right: -40px;
+  }
+  .content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+  .logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .logo img {
+    width: 100%;
+    height: 100%;
+  }
+  .brand {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #4ade80;
+    margin-top: 4px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #f0fdf4;
+  }
+  h1 .accent {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    max-width: 340px;
+  }
+  .bar {
+    width: 60px;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+  <div class="content">
+    <div class="logo">
+      <img src="data:image/png;base64,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" alt="Dynamic Snippets">
+    </div>
+    <span class="brand">Dynamic Snippets</span>
+    <h1>Smart Snippets,<br><span class="accent">Instant Paste</span></h1>
+    <p class="subtitle">Dynamic variables · Organized folders · One-click insert</p>
+    <div class="bar"></div>
+  </div>
+</div>
+<button id="dl-btn" onclick="doExport()" style="position:fixed;top:12px;right:12px;z-index:9999;background:#22c55e;color:#fff;border:none;padding:10px 22px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:Inter,Segoe UI,system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.5)">Download PNG</button>
+<script src="html2canvas.min.js"></script>
+<script>
+async function doExport() {
+  var btn = document.getElementById('dl-btn');
+  btn.textContent = 'Rendering...';
+  btn.disabled = true;
+  try {
+    var canvas = await html2canvas(document.querySelector('.canvas'), {
+      width: 440, height: 280, scale: 2,
+      backgroundColor: '#080d14', logging: false
+    });
+    var a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'small-tile-440x280.png';
+    a.click();
+    btn.textContent = 'Done!';
+  } catch(e) { btn.textContent = 'Error: ' + e.message; console.error(e); }
+  setTimeout(function(){ btn.textContent = 'Download PNG'; btn.disabled = false; }, 2000);
+}
+</script>
+</body>
+</html>
