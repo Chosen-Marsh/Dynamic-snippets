@@ -4,7 +4,7 @@
 
 **Save, organize, and instantly paste reusable text snippets with dynamic variables.**
 
-<!-- [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Get_Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com) -->
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Get_Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/lhpmacoeaepkocgkhamlnaalpifhckjm?utm_source=item-share-cb)
 [![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-22c55e?style=for-the-badge)](LICENSE)
 [![Built With](https://img.shields.io/badge/Built_With-Vue_3-42b883?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 
