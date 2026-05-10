@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Dynamic Snippets",
+  "name": "Dynamic Snippets – Text Expander & Templates",
   "version": "0.1.0",
   "description": "Save, organize, and instantly paste reusable text snippets with dynamic variables, folders, and one-click insertion.",
   "permissions": [
@@ -16,7 +16,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Dynamic Snippets",
+    "default_title": "Dynamic Snippets – Text Expander & Templates",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
