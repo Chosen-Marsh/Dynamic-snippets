@@ -195,6 +195,7 @@ class Snippets {
 
     async createSnippetFolder(folderName, parentId = null) {
         const now = this._now();
+
         const data = {
             id: Date.now(),
             name: folderName || 'Unnamed Folder',
@@ -203,17 +204,26 @@ class Snippets {
             createdAt: now,
             updatedAt: now
         };
+
         const folders = await this.getSnippetsFolders();
+
         if (parentId) {
             const parent = this._findFolder(folders, parentId);
-            if (!parent) throw new Error('Parent folder not found.');
+            
+            if (!parent) {
+                throw new Error('Parent folder not found.');
+            }
+
             parent.children = parent.children || [];
-            parent.children.push(data);
+            parent.children.unshift(data);
             parent.updatedAt = now;
         } else {
-            folders.push(data);
+            folders.unshift(data);
         }
-        await storage.setLocal({ [this.snippetsFoldersKey]: folders });
+
+        await storage.setLocal({
+            [this.snippetsFoldersKey]: folders
+        });
     }
 
     async renameSnippetFolder(id, newName) {
@@ -259,10 +269,10 @@ class Snippets {
             const parentFolder = this._findFolder(folders, newParentId);
             if (!parentFolder) throw new Error('Parent folder not found.');
             parentFolder.children = parentFolder.children || [];
-            parentFolder.children.push(folder);
+            parentFolder.children.unshift(folder);
             parentFolder.updatedAt = now;
         } else {
-            folders.push(folder);
+            folders.unshift(folder);
         }
         await storage.setLocal({ [this.snippetsFoldersKey]: folders });
     }
