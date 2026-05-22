@@ -175,6 +175,20 @@ class Snippets {
         return null;
     }
 
+    _removeFolder(items, id) {
+        const fid = String(id);
+        for (const item of items) {
+            if (!item.children?.length) continue;
+            const index = item.children.findIndex(
+                c => String(c.id) === fid && c.type === 'folder'
+            );
+            if (index !== -1) return item.children.splice(index, 1)[0];
+            const found = this._removeFolder(item.children, fid);
+            if (found) return found;
+        }
+        return null;
+    }
+
     async _getAll() {
         await this._ensureInitialized();
         const [snippetsResult, foldersResult] = await Promise.all([
@@ -239,8 +253,17 @@ class Snippets {
 
     async deleteSnippetFolder(id) {
         if (!id) throw new Error('Folder ID is required to delete a folder.');
+        const fid = String(id);
         let folders = await this.getSnippetsFolders();
-        folders = folders.filter(f => String(f.id) !== String(id));
+        const rootCount = folders.length;
+        folders = folders.filter(f => String(f.id) !== fid);
+        if (folders.length !== rootCount) {
+            await storage.setLocal({ [this.snippetsFoldersKey]: folders });
+            return;
+        }
+
+        const removed = this._removeFolder(folders, fid);
+        if (!removed) throw new Error('Folder not found.');
         await storage.setLocal({ [this.snippetsFoldersKey]: folders });
     }
 
