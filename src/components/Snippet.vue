@@ -39,12 +39,21 @@
         <li class="editor-ctx-item" @mousedown.prevent="openVarModal">
           Add Variable
         </li>
+        <li class="editor-ctx-item" @mousedown.prevent="openGlobalVarModal">
+          Add Global Variable
+        </li>
       </ul>
     </teleport>
 
     <VarModal
       :visible="isVarModalOpen"
       @close="isVarModalOpen = false"
+      @insert="insertVariableFromModal"
+    />
+
+    <GlobalVarModal
+      :visible="isGlobalVarModalOpen"
+      @close="isGlobalVarModalOpen = false"
       @insert="insertVariableFromModal"
     />
 
@@ -60,6 +69,7 @@
 import { ref, watch, onBeforeUnmount, onMounted, computed, nextTick } from 'vue';
 import Snippets from '../services/Snippets.js';
 import VarModal from './VarModal.vue';
+import GlobalVarModal from './GlobalVarModal.vue';
 
 const snippetManager = Snippets;
 
@@ -87,6 +97,7 @@ const hasPendingChanges = ref(false);
 const snippetTextarea = ref(null);
 const editorCtxMenu = ref({ visible: false, x: 0, y: 0, insertPos: 0 });
 const isVarModalOpen = ref(false);
+const isGlobalVarModalOpen = ref(false);
 const variableInsertPos = ref(0);
 
 watch(title, (val) => emit('update:title', val));
@@ -173,11 +184,18 @@ function openVarModal() {
   isVarModalOpen.value = true;
 }
 
+function openGlobalVarModal() {
+  variableInsertPos.value = editorCtxMenu.value.insertPos;
+  closeEditorContextMenu();
+  isGlobalVarModalOpen.value = true;
+}
+
 function insertVariableFromModal(token) {
   if (!token) return;
   const start = Math.max(0, Math.min(variableInsertPos.value, content.value.length));
   content.value = `${content.value.slice(0, start)}${token}${content.value.slice(start)}`;
   isVarModalOpen.value = false;
+  isGlobalVarModalOpen.value = false;
 
   nextTick(() => {
     const textarea = snippetTextarea.value;

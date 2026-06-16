@@ -24,6 +24,12 @@
 				<p>Prompt for custom values before inserting.</p>
 				<code v-pre>${ticket-input|ABC-123}</code>
 			</article>
+
+			<article class="guide-card">
+				<h2>Global Variable</h2>
+				<p>Uses a value from Settings. Missing keys paste as <code>undefined</code>.</p>
+				<code v-pre>${username-global}</code>
+			</article>
 		</div>
 
 		<footer class="tips">

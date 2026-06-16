@@ -1,9 +1,18 @@
 import { snippetPayloadByMenuId, rebuildContextMenu, lookupSnippetContent } from './background/contextMenus.js';
 import { resolveSnippetVariables } from './background/variableResolver.js';
+import { resolveGlobalVariablesInText } from './background/resolveGlobalVariables.js';
 import { insertSnippetText } from './background/snippetInserter.js';
 
 const STORAGE_FOLDERS_KEY = 'snippetsFolders';
 const STORAGE_SNIPPETS_KEY = 'snippets';
+const GLOBAL_VARS_KEY = 'globalVariables';
+
+async function getGlobalVariables() {
+  const result = await chrome.storage.local.get(GLOBAL_VARS_KEY);
+  const data = result[GLOBAL_VARS_KEY];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
+  return { ...data };
+}
 
 let rebuildQueue = Promise.resolve();
 
@@ -51,12 +60,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const cachedText = snippetPayloadByMenuId.get(info.menuItemId);
 
   (typeof cachedText === 'string' ? Promise.resolve(cachedText) : lookupSnippetContent(info.menuItemId))
-    .then((text) => {
+    .then(async (text) => {
       if (typeof text !== 'string') return;
+      const globals = await getGlobalVariables();
+      const textWithGlobals = resolveGlobalVariablesInText(text, globals);
       return chrome.scripting.executeScript({
         target: topFrameTarget,
         func: resolveSnippetVariables,
-        args: [text]
+        args: [textWithGlobals]
       });
     })
     .then((results) => {
