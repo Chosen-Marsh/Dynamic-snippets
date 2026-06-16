@@ -2,14 +2,18 @@
 import Snippet from '../components/Snippet.vue';
 import FolderTreeSideBar from '../components/FolderTreeSideBar.vue';
 import Welcome from '../components/Welcome.vue';
+import AnalyticsConsentModal from '../components/AnalyticsConsentModal.vue';
 import settings from '../services/Settings.js';
 import Snippets from '../services/Snippets.js';
+import { hasConsentBeenSet, setConsent } from '../services/AnalyticsConsent.js';
+import { track } from '../services/Analytics.js';
 import { ref, computed, onMounted } from 'vue';
 
 const sidebarRef = ref(null);
 const snippetID = ref(null);
 const snippetTitle = ref('');
 const isRestoringSnippet = ref(true);
+const showConsentModal = ref(!hasConsentBeenSet());
 const currentSettings = ref({ theme: 'dark', debounceMs: 250 });
 
 async function restoreLastOpenedSnippet() {
@@ -40,11 +44,31 @@ onMounted(async () => {
   const s = await settings.get();
   currentSettings.value = s;
   applyTheme(s.theme);
+  if (!showConsentModal.value) {
+    track('popup_opened');
+  }
 });
+
+function onConsentAccept() {
+  setConsent(true);
+  showConsentModal.value = false;
+  track('consent_granted');
+  track('popup_opened');
+}
+
+function onConsentDecline() {
+  setConsent(false);
+  showConsentModal.value = false;
+}
 
 function onSettingsSaved(s) {
   currentSettings.value = s;
   applyTheme(s.theme);
+  track('settings_saved');
+}
+
+function onAnalyticsEvent(action) {
+  track(action);
 }
 
 const liveSnippet = computed(() => {
@@ -58,6 +82,7 @@ const liveSnippet = computed(() => {
 function onFileSelect(file) {
   snippetID.value = file.id;
   snippetTitle.value = file.name || 'Untitled Snippet';
+  track('snippet_opened');
   Snippets.setLastOpenedSnippetId(file.id).catch(err => {
     console.error('Failed to set last opened snippet ID:', err);
   });
@@ -73,12 +98,29 @@ function onSnippetDelete(item) {
     snippetID.value = null;
     snippetTitle.value = '';
   }
+  track('snippet_deleted');
 }
 </script>
 
 <template>
   <main class="popup popup-shell">
-    <FolderTreeSideBar ref="sidebarRef" :live-snippet="liveSnippet" @select="onFileSelect" @delete="onSnippetDelete" @settings-saved="onSettingsSaved" />
+    <AnalyticsConsentModal
+      :visible="showConsentModal"
+      @accept="onConsentAccept"
+      @decline="onConsentDecline"
+    />
+    <FolderTreeSideBar
+      ref="sidebarRef"
+      :live-snippet="liveSnippet"
+      @select="onFileSelect"
+      @delete="onSnippetDelete"
+      @settings-saved="onSettingsSaved"
+      @settings-opened="() => onAnalyticsEvent('settings_opened')"
+      @snippet-created="() => onAnalyticsEvent('snippet_created')"
+      @folder-created="() => onAnalyticsEvent('folder_created')"
+      @import-completed="() => onAnalyticsEvent('snippets_imported')"
+      @export-completed="() => onAnalyticsEvent('snippets_exported')"
+    />
     <Welcome v-if="!snippetID && !isRestoringSnippet" />
     <Snippet
       v-if="snippetID"

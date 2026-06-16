@@ -21,9 +21,22 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['select', 'delete', 'settings-saved']);
+const emit = defineEmits([
+  'select',
+  'delete',
+  'settings-saved',
+  'settings-opened',
+  'snippet-created',
+  'folder-created',
+  'import-completed',
+  'export-completed'
+]);
 
 const showSettings = ref(false);
+function openSettings() {
+  showSettings.value = true;
+  emit('settings-opened');
+}
 function onSettingsSaved(s) {
   emit('settings-saved', s);
 }
@@ -49,7 +62,27 @@ const {
 } = useDragAndDrop(snippetManager, loadFolders);
 
 // ── Import / Export ──
-const { exportData, importData } = useImportExport(snippetManager, loadFolders);
+const { exportData: exportDataRaw, importData: importDataRaw } = useImportExport(snippetManager, loadFolders);
+
+async function exportData() {
+  await exportDataRaw();
+  emit('export-completed');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    await snippetManager.importAll(text);
+    await loadFolders();
+    emit('import-completed');
+  });
+  input.click();
+}
 
 // ── Tree ──
 function toggleFolder(item) {
@@ -125,6 +158,7 @@ async function createFolder(name, parentId = null) {
         console.error('Error creating folder:', error);
     });
     await loadFolders();
+    emit('folder-created');
 }
 
 async function createFolderFromMenu(parentId = null) {
@@ -136,6 +170,7 @@ async function createSnippet(folderId) {
     closeContextMenu();
     await snippetManager.createSnippet({ name: 'Untitled Snippet', content: '' }, folderId).catch(console.error);
     await loadFolders();
+    emit('snippet-created');
 }
 
 async function deleteFolder(item) {
@@ -345,7 +380,7 @@ defineExpose({ loadFolders });
         </template>
       </ul>
     </teleport>
-    <Footer @open-settings="showSettings = true" />
+    <Footer @open-settings="openSettings" />
     <SettingsModal :visible="showSettings" @close="showSettings = false" @saved="onSettingsSaved" />
   </aside>
 </template>

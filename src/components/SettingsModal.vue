@@ -47,6 +47,25 @@
                 step="50"
               />
             </label>
+
+            <div class="toggle-field">
+              <div class="toggle-copy">
+                <span class="field-label">Usage analytics</span>
+                <p class="toggle-help">
+                  Tracks action names locally only — never snippet content or personal data.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="toggle"
+                :class="{ 'toggle--on': analyticsEnabled }"
+                role="switch"
+                :aria-checked="analyticsEnabled"
+                @click="analyticsEnabled = !analyticsEnabled"
+              >
+                <span class="toggle-thumb" />
+              </button>
+            </div>
           </div>
 
           <div v-else class="settings-panel">
@@ -105,6 +124,7 @@
 import { ref, watch } from 'vue';
 import settings, { DEFAULTS } from '../services/Settings.js';
 import globalVariables from '../services/GlobalVariables.js';
+import { isAnalyticsEnabled, setConsent } from '../services/AnalyticsConsent.js';
 
 const props = defineProps({
   visible: { type: Boolean, default: false }
@@ -114,6 +134,7 @@ const emit = defineEmits(['close', 'saved']);
 
 const activeTab = ref('general');
 const form = ref({ ...DEFAULTS });
+const analyticsEnabled = ref(false);
 const globalVarRows = ref([]);
 
 function addGlobalVarRow() {
@@ -129,12 +150,14 @@ watch(() => props.visible, async (isVisible) => {
   activeTab.value = 'general';
   const current = await settings.get();
   form.value = { ...current };
+  analyticsEnabled.value = isAnalyticsEnabled();
   const globals = await globalVariables.getAll();
   globalVarRows.value = Object.entries(globals).map(([key, value]) => ({ key, value }));
 });
 
 async function handleSave() {
   const saved = await settings.save(form.value);
+  setConsent(analyticsEnabled.value);
   const globalsObj = {};
   for (const row of globalVarRows.value) {
     const k = row.key.trim();
@@ -270,6 +293,61 @@ function close() {
 .field-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.toggle-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+}
+
+.toggle-copy {
+  min-width: 0;
+}
+
+.toggle-help {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.toggle--on {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: var(--accent);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.toggle--on .toggle-thumb {
+  transform: translateX(18px);
+  background: var(--accent);
 }
 
 .globals-help {
