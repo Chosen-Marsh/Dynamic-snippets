@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Dynamic Snippets – Text Expander & Templates",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "Save, organize, and instantly paste reusable text snippets with dynamic variables, folders, and one-click insertion.",
   "permissions": [
     "storage",
