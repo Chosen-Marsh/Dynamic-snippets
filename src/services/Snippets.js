@@ -9,6 +9,7 @@ class Snippets {
         this.snippetsFoldersKey = FOLDERS_KEY;
         this.snippetsKey = SNIPPETS_KEY;
         this.defaultsSeededKey = DEFAULTS_SEEDED_KEY;
+        this.lastOpenedSnippetID = 'lastOpenedSnippetId';
         this._initPromise = null;
     }
 
@@ -199,6 +200,16 @@ class Snippets {
             snippets: snippetsResult[this.snippetsKey] || [],
             folders: foldersResult[this.snippetsFoldersKey] || []
         };
+    }
+
+    async setLastOpenedSnippetId(id) {
+        if (!id) throw new Error('Snippet ID is required to set last opened snippet.');
+        await storage.setLocal({ [this.lastOpenedSnippetID]: id });
+    }
+
+    async getLastOpenedSnippetId() {
+        const result = await storage.getLocal(this.lastOpenedSnippetID);
+        return result[this.lastOpenedSnippetID] || null;
     }
 
     async getSnippetsFolders() {
@@ -448,4 +459,4 @@ class Snippets {
     }
 }
 
-export default Snippets;
+export default new Snippets();

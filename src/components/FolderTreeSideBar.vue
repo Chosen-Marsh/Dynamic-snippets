@@ -6,9 +6,9 @@ import SettingsModal from './SettingsModal.vue';
 import { useContextMenu } from '../composables/useContextMenu.js';
 import { useDragAndDrop } from '../composables/useDragAndDrop.js';
 import { useImportExport } from '../composables/useImportExport.js';
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 
-const snippetManager = new Snippets();
+const snippetManager = Snippets;
 
 const props = defineProps({
   items: {
@@ -69,6 +69,32 @@ function handleClick(item) {
     activeId.value = item.id;
     emit('select', item);
   }
+}
+
+function findSnippetAncestorFolderIds(items, targetId, ancestors = []) {
+  for (const item of items) {
+    if (item.type === 'snippet' && String(item.id) === String(targetId)) {
+      return ancestors;
+    }
+    if (item.type === 'folder' && item.children?.length) {
+      const found = findSnippetAncestorFolderIds(item.children, targetId, [...ancestors, item.id]);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function activateSnippet(id) {
+  if (!id) return;
+  activeId.value = id;
+  const items = props.items ?? [...folders.value, ...rootSnippets.value];
+  const ancestorIds = findSnippetAncestorFolderIds(items, id);
+  if (!ancestorIds?.length) return;
+  const next = new Set(expanded.value);
+  for (const folderId of ancestorIds) {
+    next.add(folderId);
+  }
+  expanded.value = next;
 }
 
 function flatten(items, depth = 0) {
@@ -157,6 +183,19 @@ async function commitRename(item) {
 }
 
 onMounted(() => loadFolders());
+
+watch(
+  () => props.liveSnippet?.id,
+  (id) => {
+    if (id) activateSnippet(id);
+  },
+  { immediate: true }
+);
+
+watch([folders, rootSnippets], () => {
+  const id = props.liveSnippet?.id;
+  if (id) activateSnippet(id);
+});
 
 defineExpose({ loadFolders });
 </script>

@@ -3,12 +3,34 @@ import Snippet from '../components/Snippet.vue';
 import FolderTreeSideBar from '../components/FolderTreeSideBar.vue';
 import Welcome from '../components/Welcome.vue';
 import settings from '../services/Settings.js';
+import Snippets from '../services/Snippets.js';
 import { ref, computed, onMounted } from 'vue';
 
 const sidebarRef = ref(null);
 const snippetID = ref(null);
 const snippetTitle = ref('');
+const isRestoringSnippet = ref(true);
 const currentSettings = ref({ theme: 'dark', debounceMs: 250 });
+
+async function restoreLastOpenedSnippet() {
+  try {
+    const lastId = await Snippets.getLastOpenedSnippetId();
+    if (!lastId) return;
+    snippetID.value = lastId;
+    const snippet = await Snippets.getSnippetData(lastId);
+    if (!snippet) {
+      snippetID.value = null;
+      return;
+    }
+    snippetTitle.value = snippet.name || 'Untitled Snippet';
+  } catch (err) {
+    console.error('Failed to restore last opened snippet:', err);
+  } finally {
+    isRestoringSnippet.value = false;
+  }
+}
+
+restoreLastOpenedSnippet();
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -34,8 +56,11 @@ const liveSnippet = computed(() => {
 });
 
 function onFileSelect(file) {
-    snippetID.value = file.id;
-    snippetTitle.value = file.name || 'Untitled Snippet';
+  snippetID.value = file.id;
+  snippetTitle.value = file.name || 'Untitled Snippet';
+  Snippets.setLastOpenedSnippetId(file.id).catch(err => {
+    console.error('Failed to set last opened snippet ID:', err);
+  });
 }
 
 function onSnippetTitleUpdate(value) {
@@ -54,7 +79,7 @@ function onSnippetDelete(item) {
 <template>
   <main class="popup popup-shell">
     <FolderTreeSideBar ref="sidebarRef" :live-snippet="liveSnippet" @select="onFileSelect" @delete="onSnippetDelete" @settings-saved="onSettingsSaved" />
-    <Welcome v-if="!snippetID" />
+    <Welcome v-if="!snippetID && !isRestoringSnippet" />
     <Snippet
       v-if="snippetID"
       :id="snippetID"

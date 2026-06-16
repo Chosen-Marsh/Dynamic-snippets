@@ -61,7 +61,7 @@ import { ref, watch, onBeforeUnmount, onMounted, computed, nextTick } from 'vue'
 import Snippets from '../services/Snippets.js';
 import VarModal from './VarModal.vue';
 
-const snippetManager = new Snippets();
+const snippetManager = Snippets;
 
 const props = defineProps({
   id: {
