@@ -24,7 +24,7 @@ export function resolveSnippetVariables(text) {
       });
     }
 
-    const inputRegex = /\$\{([a-zA-Z0-9_-]+)-input\|([^}]*)\}/g;
+    const inputRegex = /\$\{([a-zA-Z0-9_-]+)-input(?:\|([^}]*))?\}/g;
     let inputMatch;
     while ((inputMatch = inputRegex.exec(rawText)) !== null) {
       const token = inputMatch[0];
@@ -36,7 +36,26 @@ export function resolveSnippetVariables(text) {
       variables.push({
         token,
         key,
-        type: 'input',
+        type: 'text',
+        value: defaultValue,
+        defaultValue
+      });
+    }
+
+    const typedInputRegex = /\$\{\{?([a-zA-Z0-9_-]+)-(text|date)(?:\|([^}]*))?\}/g;
+    let typedInputMatch;
+    while ((typedInputMatch = typedInputRegex.exec(rawText)) !== null) {
+      const token = typedInputMatch[0];
+      const key = typedInputMatch[1];
+      const type = typedInputMatch[2];
+      const defaultValue = typedInputMatch[3] || '';
+
+      if (variables.some((v) => v.token === token)) continue;
+
+      variables.push({
+        token,
+        key,
+        type,
         value: defaultValue,
         defaultValue
       });
@@ -45,10 +64,34 @@ export function resolveSnippetVariables(text) {
     return variables;
   }
 
+  function formatDateForLocale(value) {
+    if (typeof value !== 'string') return value ?? '';
+
+    const trimmed = value.trim();
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+    if (!match) return trimmed;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const parsed = new Date(year, month - 1, day);
+
+    if (Number.isNaN(parsed.getTime())) return trimmed;
+
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(parsed);
+  }
+
   function resolveSnippetTemplate(rawText, variables) {
     let resolved = rawText;
     for (const variable of variables) {
-      const safeReplacement = variable.value ?? '';
+      let safeReplacement = variable.value ?? '';
+      if (variable.type === 'date') {
+        safeReplacement = formatDateForLocale(String(safeReplacement));
+      }
       resolved = resolved.split(variable.token).join(safeReplacement);
     }
     return resolved;
@@ -82,6 +125,7 @@ export function resolveSnippetVariables(text) {
           padding: 16px;
           font-family: Segoe UI, Inter, system-ui, -apple-system, sans-serif;
           color: #e5e7eb;
+          color-scheme: dark;
         }
 
         .ds-modal {
@@ -162,6 +206,42 @@ export function resolveSnippetVariables(text) {
           font-size: 12px;
         }
 
+        .ds-input--date {
+          border-color: #25314a;
+          background: rgba(15, 23, 42, 0.75);
+          color-scheme: dark;
+          accent-color: #22c55e;
+          caret-color: #e5e7eb;
+          font-weight: 600;
+          letter-spacing: 0;
+          padding-right: 42px;
+          appearance: none;
+          -webkit-appearance: none;
+        }
+
+        .ds-input--date::-webkit-datetime-edit,
+        .ds-input--date::-webkit-datetime-edit-text,
+        .ds-input--date::-webkit-datetime-edit-day-field,
+        .ds-input--date::-webkit-datetime-edit-month-field,
+        .ds-input--date::-webkit-datetime-edit-year-field {
+          color: #e5e7eb;
+        }
+
+        .ds-input--date::-webkit-calendar-picker-indicator {
+          filter: brightness(0) invert(1);
+          opacity: 1;
+          margin-left: auto;
+          padding: 0;
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+        }
+
+        .ds-input--date::-webkit-calendar-picker-indicator:hover {
+          filter: brightness(0) invert(1);
+          opacity: 0.9;
+        }
+
         .ds-preview {
           margin: 0;
           padding: 10px;
@@ -233,8 +313,8 @@ export function resolveSnippetVariables(text) {
         return label;
       }
 
-      function styleInputElement(el) {
-        el.className = 'ds-input';
+      function styleInputElement(el, type = '') {
+        el.className = type === 'date' ? 'ds-input ds-input--date' : 'ds-input';
       }
 
       const rows = [];
@@ -255,12 +335,12 @@ export function resolveSnippetVariables(text) {
           input.value = variable.value;
         } else {
           input = document.createElement('input');
-          input.type = 'text';
+          input.type = variable.type === 'date' ? 'date' : 'text';
           input.value = variable.defaultValue;
-          input.placeholder = 'Enter value';
+          input.placeholder = variable.type === 'date' ? 'YYYY-MM-DD' : 'Enter value';
         }
 
-        styleInputElement(input);
+        styleInputElement(input, variable.type);
         rowLabel.appendChild(input);
         body.appendChild(rowLabel);
         rows.push({ variable, input });

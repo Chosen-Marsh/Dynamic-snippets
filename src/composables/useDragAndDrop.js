@@ -12,7 +12,17 @@ export function useDragAndDrop(snippetManager, loadFolders) {
   }
 
   function onDragOver(e, item) {
-    if (item.type !== 'folder' || !dragItem.value) return;
+    if (!dragItem.value) return;
+    if (item.type === 'snippet') {
+      if (dragItem.value.type !== 'snippet' || item.id === dragItem.value.id) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      dragOverId.value = item.id;
+      rootDragOver.value = false;
+      return;
+    }
+    if (item.type !== 'folder') return;
     if (dragItem.value.type === 'folder' && item.id === dragItem.value.id) return;
     e.preventDefault();
     e.stopPropagation();
@@ -29,7 +39,17 @@ export function useDragAndDrop(snippetManager, loadFolders) {
     e.preventDefault();
     e.stopPropagation();
     dragOverId.value = null;
-    if (!dragItem.value || item.type !== 'folder') return;
+    if (!dragItem.value) return;
+
+    if (item.type === 'snippet') {
+      if (dragItem.value.type !== 'snippet' || item.id === dragItem.value.id) return;
+      await snippetManager.moveSnippetBefore(dragItem.value.id, item.id).catch(console.error);
+      dragItem.value = null;
+      await loadFolders();
+      return;
+    }
+
+    if (item.type !== 'folder') return;
     if (dragItem.value.type === 'folder' && item.id === dragItem.value.id) return;
 
     if (dragItem.value.type === 'folder') {

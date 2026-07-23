@@ -19,6 +19,14 @@
           <button
             type="button"
             class="settings-tab"
+            :class="{ 'settings-tab--active': activeTab === 'data' }"
+            @click="activeTab = 'data'"
+          >
+            Data
+          </button>
+          <button
+            type="button"
+            class="settings-tab"
             :class="{ 'settings-tab--active': activeTab === 'globals' }"
             @click="activeTab = 'globals'"
           >
@@ -65,6 +73,19 @@
               >
                 <span class="toggle-thumb" />
               </button>
+            </div>
+          </div>
+
+          <div v-else-if="activeTab === 'data'" class="settings-panel">
+            <div class="data-tools">
+              <div class="toggle-copy">
+                <span class="field-label">Data tools</span>
+                <p class="toggle-help">Import or export your snippets as JSON.</p>
+              </div>
+              <div class="data-tools-actions">
+                <button class="btn btn-ghost" type="button" @click="handleImport">Import</button>
+                <button class="btn btn-primary" type="button" @click="handleExport">Export</button>
+              </div>
             </div>
           </div>
 
@@ -125,17 +146,37 @@ import { ref, watch } from 'vue';
 import settings, { DEFAULTS } from '../services/Settings.js';
 import globalVariables from '../services/GlobalVariables.js';
 import { isAnalyticsEnabled, setConsent } from '../services/AnalyticsConsent.js';
+import Snippets from '../services/Snippets.js';
+import { useImportExport } from '../composables/useImportExport.js';
+
+const snippetManager = Snippets;
 
 const props = defineProps({
   visible: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['close', 'saved']);
+const emit = defineEmits(['close', 'saved', 'import-completed', 'export-completed']);
 
 const activeTab = ref('general');
 const form = ref({ ...DEFAULTS });
 const analyticsEnabled = ref(false);
 const globalVarRows = ref([]);
+
+const { exportData: exportDataRaw, importData: importDataRaw } = useImportExport(
+  snippetManager,
+  async () => {
+    emit('import-completed');
+  }
+);
+
+async function handleExport() {
+  await exportDataRaw();
+  emit('export-completed');
+}
+
+function handleImport() {
+  importDataRaw();
+}
 
 function addGlobalVarRow() {
   globalVarRows.value.push({ key: '', value: '' });
@@ -348,6 +389,21 @@ function close() {
 .toggle--on .toggle-thumb {
   transform: translateX(18px);
   background: var(--accent);
+}
+
+.data-tools {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+}
+
+.data-tools-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
 }
 
 .globals-help {

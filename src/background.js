@@ -2,10 +2,24 @@ import { snippetPayloadByMenuId, rebuildContextMenu, lookupSnippetContent } from
 import { resolveSnippetVariables } from './background/variableResolver.js';
 import { resolveGlobalVariablesInText } from './background/resolveGlobalVariables.js';
 import { insertSnippetText } from './background/snippetInserter.js';
+import { track } from './services/Analytics.js';
+import { hasVariableTokens } from './variables/tokenParser.js';
 
 const STORAGE_FOLDERS_KEY = 'snippetsFolders';
 const STORAGE_SNIPPETS_KEY = 'snippets';
 const GLOBAL_VARS_KEY = 'globalVariables';
+const GLOBAL_TOKEN_REGEX = /\$\{[a-zA-Z0-9_-]+-global\}/;
+
+function getSnippetAnalyticsFlags(rawText) {
+  if (typeof rawText !== 'string') {
+    return { hasVariables: false, hasGlobals: false };
+  }
+
+  return {
+    hasVariables: hasVariableTokens(rawText),
+    hasGlobals: GLOBAL_TOKEN_REGEX.test(rawText)
+  };
+}
 
 async function getGlobalVariables() {
   const result = await chrome.storage.local.get(GLOBAL_VARS_KEY);
@@ -59,29 +73,39 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   const cachedText = snippetPayloadByMenuId.get(info.menuItemId);
 
-  (typeof cachedText === 'string' ? Promise.resolve(cachedText) : lookupSnippetContent(info.menuItemId))
-    .then(async (text) => {
+  (async () => {
+    try {
+      const text = typeof cachedText === 'string' ? cachedText : await lookupSnippetContent(info.menuItemId);
       if (typeof text !== 'string') return;
+
+      const analyticsFlags = getSnippetAnalyticsFlags(text);
       const globals = await getGlobalVariables();
       const textWithGlobals = resolveGlobalVariablesInText(text, globals);
-      return chrome.scripting.executeScript({
+
+      const results = await chrome.scripting.executeScript({
         target: topFrameTarget,
         func: resolveSnippetVariables,
         args: [textWithGlobals]
       });
-    })
-    .then((results) => {
+
       const resolvedText = results?.[0]?.result;
       if (typeof resolvedText !== 'string') return;
-      return chrome.scripting.executeScript({
+
+      await chrome.scripting.executeScript({
         target,
         func: insertSnippetText,
         args: [resolvedText]
       });
-    })
-    .catch((error) => {
+
+      track('context_menu_inserted', {
+        source: 'context_menu',
+        hasVariables: analyticsFlags.hasVariables,
+        hasGlobals: analyticsFlags.hasGlobals
+      });
+    } catch (error) {
       console.error('Failed to insert snippet text:', error);
-    });
+    }
+  })();
 });
 
 queueRebuildContextMenu();

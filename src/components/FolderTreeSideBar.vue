@@ -1,11 +1,9 @@
 <script setup>
-import Button from './Button.vue';
 import Snippets from '../services/Snippets.js';
 import Footer from './Footer.vue';
 import SettingsModal from './SettingsModal.vue';
 import { useContextMenu } from '../composables/useContextMenu.js';
 import { useDragAndDrop } from '../composables/useDragAndDrop.js';
-import { useImportExport } from '../composables/useImportExport.js';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 
 const snippetManager = Snippets;
@@ -61,27 +59,13 @@ const {
   onRootDragOver, onRootDragLeave, onRootDrop, onDragEnd
 } = useDragAndDrop(snippetManager, loadFolders);
 
-// ── Import / Export ──
-const { exportData: exportDataRaw, importData: importDataRaw } = useImportExport(snippetManager, loadFolders);
-
-async function exportData() {
-  await exportDataRaw();
-  emit('export-completed');
+async function onImportCompleted() {
+  await loadFolders();
+  emit('import-completed');
 }
 
-function importData() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.addEventListener('change', async () => {
-    const file = input.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    await snippetManager.importAll(text);
-    await loadFolders();
-    emit('import-completed');
-  });
-  input.click();
+function onExportCompleted() {
+  emit('export-completed');
 }
 
 // ── Tree ──
@@ -239,14 +223,6 @@ defineExpose({ loadFolders });
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="sidebar-header-label">Snippets</span>
-      <div class="actions">
-        <span class="tooltip-wrap" data-tooltip="Import snippets">
-          <Button variant="secondary" icon="import" :icon-size="12" @click="importData" />
-        </span>
-        <span class="tooltip-wrap" data-tooltip="Export all snippets as JSON">
-          <Button variant="secondary" icon="export" :icon-size="12" @click="exportData" />
-        </span>
-      </div>
     </div>
 
     <div
@@ -265,6 +241,7 @@ defineExpose({ loadFolders });
           'tree-row--active': activeId === item.id,
           'tree-row--folder': item.type === 'folder',
           'tree-row--drag-over': dragOverId === item.id,
+          'tree-row--drop-before': item.type === 'snippet' && dragOverId === item.id && dragItem?.type === 'snippet',
           'tree-row--dragging': dragItem && dragItem.id === item.id && dragItem.type === item.type
         }"
         :style="{ paddingLeft: `${10 + item.depth * 14}px` }"
@@ -381,7 +358,13 @@ defineExpose({ loadFolders });
       </ul>
     </teleport>
     <Footer @open-settings="openSettings" />
-    <SettingsModal :visible="showSettings" @close="showSettings = false" @saved="onSettingsSaved" />
+    <SettingsModal
+      :visible="showSettings"
+      @close="showSettings = false"
+      @saved="onSettingsSaved"
+      @import-completed="onImportCompleted"
+      @export-completed="onExportCompleted"
+    />
   </aside>
 </template>
 
@@ -437,45 +420,6 @@ defineExpose({ loadFolders });
   border-radius: 99px;
 }
 
-.actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tooltip-wrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.tooltip-wrap::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  background: var(--bg-elev-2);
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.3;
-  padding: 5px 8px;
-  border-radius: 5px;
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(-2px);
-  transition: opacity 120ms ease, transform 120ms ease;
-  z-index: 100;
-}
-
-.tooltip-wrap:hover::after {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .tree-row {
   display: flex;
   align-items: center;
@@ -514,6 +458,10 @@ defineExpose({ loadFolders });
   background: rgba(34, 197, 94, 0.18);
   outline: 1px solid var(--accent);
   outline-offset: -1px;
+
+.tree-row--drop-before {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
 }
 
 .tree-row--dragging {

@@ -1,18 +1,26 @@
 # Dynamic Snippets Privacy Policy
 
-**Last updated:** April 16, 2026
+**Last updated:** July 23, 2026
 
 ## Data Collection
 
-Dynamic Snippets does **not** collect, transmit, or share any personal data or user data.
+Dynamic Snippets does **not** collect, transmit, or share personal data.
+
+The extension does not send snippet content, variable values, or personal identifiers anywhere.
+
+Analytics network sending is currently disabled in the shipped build.
 
 ## Data Storage
 
 All snippets, folders, and extension settings (theme preference, auto-save timing) are stored locally on your device using the Chrome Storage API (`chrome.storage.local`). This data never leaves your browser.
 
+If optional analytics is enabled in a future release, usage events are designed to be action-level only (for example, "settings_opened"), never snippet text.
+
 ## Third Parties
 
-No data is sold, transferred, or shared with third parties. The extension does not use analytics, tracking, cookies, or any external services.
+No data is sold, transferred, or shared with third parties.
+
+The extension does not use advertising trackers or third-party cookies.
 
 ## Permissions
 

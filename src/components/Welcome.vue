@@ -7,8 +7,8 @@
 			<p class="eyebrow">Dynamic Snippets</p>
 			<h1>Build smart snippets in seconds</h1>
 			<p class="lead">
-				Select a snippet on the left or create one from the sidebar menu. You can use
-				variables to make each paste dynamic.
+				Select a snippet on the left or create one from the sidebar menu. Use variables to
+				fill values quickly at insert time.
 			</p>
 		</header>
 
@@ -22,7 +22,13 @@
 			<article class="guide-card">
 				<h2>Text Input Variable</h2>
 				<p>Prompt for custom values before inserting.</p>
-				<code v-pre>${ticket-input|ABC-123}</code>
+				<code v-pre>${ticket-text|ABC-123}</code>
+			</article>
+
+			<article class="guide-card">
+				<h2>Date Variable</h2>
+				<p>Pick a date and insert it using your local date format.</p>
+				<code v-pre>${dueDate-date|2026-07-25}</code>
 			</article>
 
 			<article class="guide-card">
@@ -35,9 +41,15 @@
 		<footer class="tips">
 			<span class="tip">Tip: Right-click in the editor to add variables quickly.</span>
 			<span class="tip">Tip: Use folders to group snippets by project or workflow.</span>
+			<span class="tip">Tip: Date variables insert in your browser's local format.</span>
+			<button class="history-btn" type="button" @click="emit('view-history')">View version history</button>
 		</footer>
 	</section>
 </template>
+
+<script setup>
+const emit = defineEmits(['view-history']);
+</script>
 
 <style scoped>
 .welcome {
@@ -187,6 +199,30 @@
 	padding: 7px 9px;
 	font-size: 11px;
 	line-height: 1.35;
+}
+
+.history-btn {
+	appearance: none;
+	border: 1px solid rgba(34, 197, 94, 0.38);
+	background: rgba(15, 23, 42, 0.65);
+	color: #bbf7d0;
+	border-radius: 8px;
+	padding: 8px 10px;
+	font-size: 11px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: transform 120ms ease, background 160ms ease, color 160ms ease;
+}
+
+.history-btn:hover {
+	transform: translateY(-1px);
+	background: rgba(22, 163, 74, 0.18);
+	color: #ecfdf5;
+}
+
+.history-btn:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
 }
 
 @media (max-width: 680px) {

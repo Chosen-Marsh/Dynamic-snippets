@@ -176,6 +176,39 @@ class Snippets {
         return null;
     }
 
+    _removeSnippetWithParent(items, sid, parentFolder = null) {
+        for (const item of items) {
+            if (!item.children?.length) continue;
+            const index = item.children.findIndex(c => String(c.id) === sid && c.type === 'snippet');
+            if (index !== -1) {
+                return {
+                    snippet: item.children.splice(index, 1)[0],
+                    parentFolder: item
+                };
+            }
+            const found = this._removeSnippetWithParent(item.children, sid, item);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    _findSnippetLocationInFolders(items, sid) {
+        for (const item of items) {
+            if (!item.children?.length) continue;
+            const index = item.children.findIndex(c => String(c.id) === sid && c.type === 'snippet');
+            if (index !== -1) {
+                return {
+                    container: item.children,
+                    index,
+                    parentFolder: item
+                };
+            }
+            const found = this._findSnippetLocationInFolders(item.children, sid);
+            if (found) return found;
+        }
+        return null;
+    }
+
     _removeFolder(items, id) {
         const fid = String(id);
         for (const item of items) {
@@ -210,6 +243,10 @@ class Snippets {
     async getLastOpenedSnippetId() {
         const result = await storage.getLocal(this.lastOpenedSnippetID);
         return result[this.lastOpenedSnippetID] || null;
+    }
+
+    async clearLastOpenedSnippetId() {
+        await storage.removeLocal(this.lastOpenedSnippetID);
     }
 
     async getSnippetsFolders() {
@@ -423,6 +460,52 @@ class Snippets {
         } else {
             snippets.push(snippet);
         }
+
+        await storage.setLocal({
+            [this.snippetsKey]: snippets,
+            [this.snippetsFoldersKey]: folders
+        });
+    }
+
+    async moveSnippetBefore(id, targetSnippetId) {
+        if (!id || !targetSnippetId) {
+            throw new Error('Snippet ID and target snippet ID are required to reorder snippets.');
+        }
+
+        const sid = String(id);
+        const targetId = String(targetSnippetId);
+        if (sid === targetId) return;
+
+        const { snippets, folders } = await this._getAll();
+        let sourceParentFolder = null;
+
+        const sourceRootIndex = snippets.findIndex(s => String(s.id) === sid && s.type === 'snippet');
+        let snippet;
+        if (sourceRootIndex !== -1) {
+            snippet = snippets.splice(sourceRootIndex, 1)[0];
+        } else {
+            const removed = this._removeSnippetWithParent(folders, sid);
+            snippet = removed?.snippet;
+            sourceParentFolder = removed?.parentFolder ?? null;
+        }
+
+        if (!snippet) throw new Error('Snippet not found.');
+
+        const targetRootIndex = snippets.findIndex(s => String(s.id) === targetId && s.type === 'snippet');
+        let targetParentFolder = null;
+        if (targetRootIndex !== -1) {
+            snippets.splice(targetRootIndex, 0, snippet);
+        } else {
+            const targetLocation = this._findSnippetLocationInFolders(folders, targetId);
+            if (!targetLocation) throw new Error('Target snippet not found.');
+            targetParentFolder = targetLocation.parentFolder;
+            targetLocation.container.splice(targetLocation.index, 0, snippet);
+        }
+
+        const now = this._now();
+        snippet.updatedAt = now;
+        if (sourceParentFolder) sourceParentFolder.updatedAt = now;
+        if (targetParentFolder) targetParentFolder.updatedAt = now;
 
         await storage.setLocal({
             [this.snippetsKey]: snippets,

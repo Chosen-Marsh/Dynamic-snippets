@@ -10,6 +10,23 @@
         spellcheck="false"
         draggable="false"
       />
+
+      <button
+        class="snippet-close"
+        type="button"
+        aria-label="Close snippet"
+        title="Back to welcome"
+        @click="emit('close')"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
     </div>
 
     <div class="snippet-content">
@@ -84,7 +101,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:title', 'update:content']);
+const emit = defineEmits(['update:title', 'update:content', 'close']);
 
 const title = ref('Untitled Snippet');
 const content = ref('');
@@ -297,6 +314,32 @@ onMounted(() => {
 .snippet-title::placeholder {
   color: var(--muted);
   font-weight: 400;
+}
+
+.snippet-close {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.snippet-close svg {
+  width: 13px;
+  height: 13px;
+}
+
+.snippet-close:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 /* ── Body ── */

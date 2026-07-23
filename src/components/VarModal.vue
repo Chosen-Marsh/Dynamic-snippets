@@ -13,8 +13,9 @@
 					<label class="field">
 						<span class="field-label">Type</span>
 						<select v-model="varType" class="field-input">
-							<option value="dropdown">Dropdown with options</option>
-							<option value="input">Text input</option>
+							<option v-for="option in variableTypeOptions" :key="option.value" :value="option.value">
+								{{ option.label }}
+							</option>
 						</select>
 					</label>
 
@@ -44,8 +45,9 @@
 						<input
 							v-model="defaultValue"
 							class="field-input"
-							type="text"
-							placeholder="my-default"
+							:class="{ 'field-input--date': varType === 'date' }"
+							:type="varType === 'date' ? 'date' : 'text'"
+							:placeholder="varType === 'date' ? 'yyyy-mm-dd' : 'my-default'"
 						/>
 					</label>
 
@@ -68,6 +70,7 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
+import { buildVariableToken, parseCsvOptions, VARIABLE_TYPE_OPTIONS } from '../variables/typeRegistry.js';
 
 const props = defineProps({
 	visible: {
@@ -78,6 +81,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'insert']);
 
+const variableTypeOptions = VARIABLE_TYPE_OPTIONS;
+
 const varType = ref('dropdown');
 const keyName = ref('');
 const dropdownOptions = ref('value1,value2');
@@ -86,19 +91,16 @@ const keyInput = ref(null);
 
 const normalizedKey = computed(() => keyName.value.trim());
 const normalizedOptions = computed(() => {
-	return dropdownOptions.value
-		.split(',')
-		.map(opt => opt.trim())
-		.filter(Boolean)
-		.join(',');
+	return parseCsvOptions(dropdownOptions.value).join(',');
 });
 
 const tokenPreview = computed(() => {
-	if (!normalizedKey.value) return '';
-	if (varType.value === 'dropdown') {
-		return `\${{${normalizedKey.value}-dropdown|${normalizedOptions.value}}`;
-	}
-	return `\${${normalizedKey.value}-input|${defaultValue.value.trim()}}`;
+	return buildVariableToken({
+		type: varType.value,
+		key: normalizedKey.value,
+		options: normalizedOptions.value,
+		defaultValue: defaultValue.value
+	});
 });
 
 const canInsert = computed(() => {
@@ -252,6 +254,32 @@ watch(() => props.visible, async (isVisible) => {
 .field-input:focus {
 	border-color: var(--accent);
 	box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.field-input--date {
+	border-color: var(--border);
+	background: rgba(15, 23, 42, 0.75);
+	color-scheme: dark;
+	font-weight: 600;
+	letter-spacing: 0;
+	padding-right: 42px;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.field-input--date::-webkit-calendar-picker-indicator {
+	filter: brightness(0) invert(1);
+	opacity: 1;
+	margin-left: auto;
+	padding: 0;
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+}
+
+.field-input--date::-webkit-calendar-picker-indicator:hover {
+	filter: brightness(0) invert(1);
+	opacity: 0.9;
 }
 
 .preview-wrap {

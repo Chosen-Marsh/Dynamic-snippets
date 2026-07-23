@@ -1,4 +1,5 @@
 const ROOT_MENU_ID = 'dynamic-snippets-root';
+const MENU_CONTEXTS = ['all'];
 
 const snippetPayloadByMenuId = new Map();
 
@@ -54,7 +55,7 @@ function registerSnippetMenu(snippet, parentId = ROOT_MENU_ID) {
     id: snippetId,
     parentId,
     title: clipTitle(snippet.name),
-    contexts: ['editable']
+    contexts: MENU_CONTEXTS
   });
 }
 
@@ -65,7 +66,7 @@ function registerFolderMenus(folder, parentId = ROOT_MENU_ID) {
     id: folderMenuId,
     parentId,
     title: clipTitle(folder.name),
-    contexts: ['editable']
+    contexts: MENU_CONTEXTS
   })];
 
   const children = Array.isArray(folder.children) ? folder.children : [];
@@ -97,7 +98,7 @@ async function rebuildContextMenu() {
   await createMenu({
     id: ROOT_MENU_ID,
     title: 'Insert Snippet',
-    contexts: ['editable']
+    contexts: MENU_CONTEXTS
   });
 
   const { folders, snippets } = await getStoredTree();
@@ -115,7 +116,7 @@ async function rebuildContextMenu() {
       id: 'snippets-empty',
       parentId: ROOT_MENU_ID,
       title: 'No snippets available',
-      contexts: ['editable'],
+      contexts: MENU_CONTEXTS,
       enabled: false
     });
   }
