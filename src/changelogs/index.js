@@ -1,7 +1,7 @@
-import v1_0_0 from './v1_0_0.js';
+import v1_1_0 from './v1_1_0.js';
 
 const CHANGELOGS = {
-  '1.0.0': v1_0_0
+  '1.1.0': v1_1_0
 };
 
 function compareSemverDesc(a, b) {

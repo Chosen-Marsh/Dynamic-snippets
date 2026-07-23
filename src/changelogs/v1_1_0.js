@@ -1,11 +1,15 @@
 export default {
-  version: '1.0.0',
+  version: '1.1.0',
   title: 'Dynamic variable upgrades',
   date: '2026-07-23',
   changes: [
     {
       type: 'added',
       text: 'Added a new variable type: date.'
+    },
+    {
+      type: 'added',
+      text: 'Added a Close button to the opened snippet.'
     },
     {
       type: 'changed',

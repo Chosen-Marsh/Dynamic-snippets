@@ -28,7 +28,7 @@
 			<article class="guide-card">
 				<h2>Date Variable</h2>
 				<p>Pick a date and insert it using your local date format.</p>
-				<code v-pre>${dueDate-date|2026-07-25}</code>
+				<code v-pre>${dueDate-date|25-07-2025}</code>
 			</article>
 
 			<article class="guide-card">
