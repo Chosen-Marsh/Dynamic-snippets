@@ -468,6 +468,14 @@ class Snippets {
     }
 
     async moveSnippetBefore(id, targetSnippetId) {
+        return this._moveSnippetToPosition(id, targetSnippetId, 'before');
+    }
+
+    async moveSnippetAfter(id, targetSnippetId) {
+        return this._moveSnippetToPosition(id, targetSnippetId, 'after');
+    }
+
+    async _moveSnippetToPosition(id, targetSnippetId, position) {
         if (!id || !targetSnippetId) {
             throw new Error('Snippet ID and target snippet ID are required to reorder snippets.');
         }
@@ -494,12 +502,14 @@ class Snippets {
         const targetRootIndex = snippets.findIndex(s => String(s.id) === targetId && s.type === 'snippet');
         let targetParentFolder = null;
         if (targetRootIndex !== -1) {
-            snippets.splice(targetRootIndex, 0, snippet);
+            const insertionIndex = position === 'after' ? targetRootIndex + 1 : targetRootIndex;
+            snippets.splice(insertionIndex, 0, snippet);
         } else {
             const targetLocation = this._findSnippetLocationInFolders(folders, targetId);
             if (!targetLocation) throw new Error('Target snippet not found.');
             targetParentFolder = targetLocation.parentFolder;
-            targetLocation.container.splice(targetLocation.index, 0, snippet);
+            const insertionIndex = position === 'after' ? targetLocation.index + 1 : targetLocation.index;
+            targetLocation.container.splice(insertionIndex, 0, snippet);
         }
 
         const now = this._now();
@@ -525,6 +535,20 @@ class Snippets {
         return JSON.stringify({ snippets, folders }, null, 2);
     }
 
+    getDefaultSeedContent() {
+        return this._buildDefaultContent();
+    }
+
+    async replaceAll(payload) {
+        const source = payload && typeof payload === 'object' ? payload : {};
+        const snippets = Array.isArray(source.snippets) ? source.snippets : [];
+        const folders = Array.isArray(source.folders) ? source.folders : [];
+        await storage.setLocal({
+            [this.snippetsKey]: snippets,
+            [this.snippetsFoldersKey]: folders
+        });
+    }
+
     async importAll(jsonString) {
         if (!jsonString || typeof jsonString !== 'string') {
             throw new Error('A valid JSON string is required.');
@@ -535,10 +559,7 @@ class Snippets {
         }
         const snippets = Array.isArray(data.snippets) ? data.snippets : [];
         const folders = Array.isArray(data.folders) ? data.folders : [];
-        await storage.setLocal({
-            [this.snippetsKey]: snippets,
-            [this.snippetsFoldersKey]: folders
-        });
+        await this.replaceAll({ snippets, folders });
     }
 }
 

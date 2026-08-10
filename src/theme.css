@@ -15,19 +15,24 @@
 }
 
 [data-theme="light"] {
-  --bg: #f1f5f9;
+  --bg: #f5f7fb;
   --bg-elev: #ffffff;
-  --bg-elev-2: #e8edf4;
+  --bg-elev-2: #eef2f7;
   --text: #0f172a;
   --muted: #475569;
-  --accent: #16a34a;
-  --accent-strong: #15803d;
+  --accent: #15803d;
+  --accent-strong: #166534;
   --danger: #dc2626;
   --danger-strong: #b91c1c;
-  --secondary: #94a3b8;
+  --secondary: #64748b;
   --secondary-strong: #cbd5e1;
   --border: #cbd5e1;
-  --shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+  --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  --surface-strong: #f8fafc;
+  --surface-muted: #e2e8f0;
+  --code-bg: #f8fafc;
+  --code-text: #0f172a;
+  --code-border: #cbd5e1;
 }
 
 * {
@@ -61,6 +66,28 @@ body {
 
 #app :not(button):not(.btn):not(.btn *) {
   border-radius: 0 !important;
+}
+
+code,
+pre {
+  font-family: "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
+}
+
+code {
+  color: var(--code-text, var(--text));
+  background: var(--code-bg, var(--bg-elev-2));
+  border: 1px solid var(--code-border, var(--border));
+  border-radius: 6px;
+  padding: 0.12rem 0.35rem;
+}
+
+pre {
+  color: var(--code-text, var(--text));
+  background: var(--code-bg, var(--bg-elev-2));
+  border: 1px solid var(--code-border, var(--border));
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  overflow-x: auto;
 }
 
 .popup {

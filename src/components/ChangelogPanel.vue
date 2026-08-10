@@ -5,37 +5,69 @@
 
     <header class="changelog-header">
       <p class="eyebrow">{{ historyMode ? 'Release Notes' : `What's New` }}</p>
-      <h1>{{ historyMode ? 'Version history' : (changelog?.title || 'Latest updates') }}</h1>
-      <div v-if="!historyMode" class="meta-row">
-        <span class="meta-chip">Version {{ changelog?.version }}</span>
+      <h1>
+        {{ historyMode
+          ? (selectedHistoryEntry ? selectedHistoryEntry.title : 'Version history')
+          : (changelog?.title || 'Latest updates') }}
+      </h1>
+
+      <div v-if="historyMode && selectedHistoryEntry" class="meta-row">
+        <span class="meta-chip meta-chip--strong">Version {{ selectedHistoryEntry.version }}</span>
+        <span class="meta-chip">{{ selectedHistoryEntry.date }}</span>
+      </div>
+
+      <div v-else-if="!historyMode" class="meta-row">
+        <span class="meta-chip meta-chip--strong">Version {{ changelog?.version }}</span>
         <span class="meta-chip">{{ changelog?.date }}</span>
       </div>
     </header>
 
-    <div v-if="historyMode" class="changelog-list history-list">
-      <article v-for="entry in historyEntries" :key="entry.version" class="history-card">
-        <header class="history-header">
-          <h2>{{ entry.title }}</h2>
-          <div class="meta-row">
-            <span class="meta-chip">Version {{ entry.version }}</span>
-            <span class="meta-chip">{{ entry.date }}</span>
-          </div>
-        </header>
-        <ul class="entry-list">
-          <li v-for="(item, index) in normalizeChanges(entry.changes)" :key="index" class="change-item">
-            <span class="change-type" :class="`change-type--${item.type}`">{{ item.type }}</span>
-            <span>{{ item.text }}</span>
-          </li>
-        </ul>
-        <section v-if="normalizeNotes(entry.comingSoon).length" class="coming-soon">
-          <h3>Coming soon</h3>
-          <ul class="coming-list">
-            <li v-for="(note, index) in normalizeNotes(entry.comingSoon)" :key="`history-coming-${index}`" class="coming-item">
-              {{ note }}
-            </li>
-          </ul>
-        </section>
-      </article>
+    <div v-if="historyMode && !selectedHistoryEntry" class="release-card-grid">
+      <button
+        v-for="entry in historyEntries"
+        :key="entry.version"
+        class="release-card"
+        type="button"
+        @click="openHistoryEntry(entry.version)"
+      >
+        <h2 class="release-card-title">{{ entry.title }}</h2>
+        <div class="release-card-meta">
+          <span class="meta-chip meta-chip--strong">Version {{ entry.version }}</span>
+          <span class="meta-chip">{{ entry.date }}</span>
+        </div>
+        <p class="release-card-cta">Open changelog</p>
+      </button>
+    </div>
+
+    <div v-else-if="historyMode && selectedHistoryEntry" class="history-detail-wrap">
+      <div class="history-detail-actions">
+        <button class="btn btn-ghost" type="button" @click="closeHistoryEntry">Close changelog</button>
+      </div>
+
+      <ul class="changelog-list">
+        <li
+          v-for="(item, index) in normalizeChanges(selectedHistoryEntry.changes || [])"
+          :key="index"
+          class="change-item"
+        >
+          <span class="change-type" :class="`change-type--${item.type}`">{{ item.type }}</span>
+          <span>{{ item.text }}</span>
+        </li>
+        <li v-if="normalizeNotes(selectedHistoryEntry.comingSoon).length" class="coming-row">
+          <section class="coming-soon">
+            <h3>Coming soon</h3>
+            <ul class="coming-list">
+              <li
+                v-for="(note, index) in normalizeNotes(selectedHistoryEntry.comingSoon)"
+                :key="`history-coming-${index}`"
+                class="coming-item"
+              >
+                {{ note }}
+              </li>
+            </ul>
+          </section>
+        </li>
+      </ul>
     </div>
 
     <ul v-else class="changelog-list">
@@ -56,7 +88,11 @@
     </ul>
 
     <footer class="changelog-footer">
-      <p class="helper">{{ historyMode ? 'Review previous releases anytime from Welcome.' : 'You will only see this once per version.' }}</p>
+      <p class="helper">
+        {{ historyMode
+          ? (selectedHistoryEntry ? 'Viewing release details.' : 'Choose a release card to view full changes.')
+          : 'You will only see this once per version.' }}
+      </p>
       <button class="btn btn-primary" type="button" @click="emit(historyMode ? 'closeHistory' : 'dismiss')">
         {{ historyMode ? 'Close history' : 'Got it' }}
       </button>
@@ -65,7 +101,7 @@
 </template>
 
 <script setup>
-import { computed, toRefs } from 'vue';
+import { computed, ref, toRefs, watch } from 'vue';
 
 const props = defineProps({
   changelog: {
@@ -86,20 +122,59 @@ const { changelog, historyMode } = toRefs(props);
 
 const emit = defineEmits(['dismiss', 'closeHistory']);
 
+const selectedHistoryVersion = ref(null);
 const historyEntries = computed(() => Array.isArray(props.history) ? props.history : []);
+const selectedHistoryEntry = computed(() => {
+  if (!selectedHistoryVersion.value) return null;
+  return historyEntries.value.find((entry) => entry.version === selectedHistoryVersion.value) || null;
+});
+
+function openHistoryEntry(version) {
+  selectedHistoryVersion.value = version;
+}
+
+function closeHistoryEntry() {
+  selectedHistoryVersion.value = null;
+}
+
+watch(
+  () => props.historyMode,
+  (isHistoryMode) => {
+    if (!isHistoryMode) {
+      selectedHistoryVersion.value = null;
+    }
+  }
+);
 
 function normalizeChanges(items = []) {
-  return items.map((item) => {
+  const normalized = items.map((item) => {
     if (typeof item === 'string') {
       return { type: 'changed', text: item };
     }
 
-    const type = ['added', 'changed', 'removed'].includes(item?.type) ? item.type : 'changed';
+    const type = ['added', 'changed', 'removed', 'fixed'].includes(item?.type) ? item.type : 'changed';
     return {
       type,
       text: String(item?.text || '')
     };
   });
+
+  const typePriority = {
+    added: 0,
+    changed: 1,
+    fixed: 2,
+    removed: 3
+  };
+
+  return normalized
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const aPriority = typePriority[a.item.type] ?? 99;
+      const bPriority = typePriority[b.item.type] ?? 99;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return a.index - b.index;
+    })
+    .map(({ item }) => item);
 }
 
 function normalizeNotes(items = []) {
@@ -149,6 +224,8 @@ function normalizeNotes(items = []) {
 }
 
 .changelog-header,
+.release-card-grid,
+.history-detail-wrap,
 .changelog-list,
 .changelog-footer {
   position: relative;
@@ -183,10 +260,82 @@ function normalizeNotes(items = []) {
   color: var(--text);
   font-size: 11px;
   font-weight: 600;
-  border: 1px solid var(--border);
-  background: rgba(15, 23, 42, 0.56);
+  border: 1px solid #395073;
+  background: #1a2942;
   border-radius: 999px;
   padding: 4px 9px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.meta-chip--strong {
+  color: #d1fae5;
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(22, 163, 74, 0.28);
+}
+
+.release-card-grid {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(10, 16, 28, 0.8);
+  display: grid;
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg-elev-2);
+}
+
+.release-card {
+  appearance: none;
+  border: 1px solid #324563;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(22, 33, 51, 0.95) 0%, rgba(15, 24, 40, 0.95) 100%);
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, transform 120ms ease, box-shadow 160ms ease;
+}
+
+.release-card:hover,
+.release-card:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25), 0 8px 16px rgba(0, 0, 0, 0.24);
+  transform: translateY(-1px);
+}
+
+.release-card-title {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.release-card-meta {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.release-card-cta {
+  margin: 10px 0 0;
+  color: #86efac;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.history-detail-wrap {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+}
+
+.history-detail-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .changelog-list {
@@ -195,7 +344,7 @@ function normalizeNotes(items = []) {
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--bg-elev-2);
+  background: var(--bg-elev);
   display: grid;
   gap: 8px;
   overflow-y: auto;
@@ -203,16 +352,19 @@ function normalizeNotes(items = []) {
   scrollbar-color: var(--accent) var(--bg-elev-2);
 }
 
-.changelog-list::-webkit-scrollbar {
+.changelog-list::-webkit-scrollbar,
+.release-card-grid::-webkit-scrollbar {
   width: 10px;
 }
 
-.changelog-list::-webkit-scrollbar-track {
+.changelog-list::-webkit-scrollbar-track,
+.release-card-grid::-webkit-scrollbar-track {
   background: var(--bg-elev-2);
   border-radius: 999px;
 }
 
-.changelog-list::-webkit-scrollbar-thumb {
+.changelog-list::-webkit-scrollbar-thumb,
+.release-card-grid::-webkit-scrollbar-thumb {
   background: var(--accent);
   border-radius: 999px;
   border: 2px solid var(--bg-elev-2);
@@ -223,9 +375,9 @@ function normalizeNotes(items = []) {
   grid-template-columns: auto 1fr;
   gap: 9px;
   align-items: flex-start;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid #324563;
   border-radius: 9px;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(22, 34, 52, 0.9);
   color: var(--text);
   font-size: 12px;
   line-height: 1.5;
@@ -250,46 +402,26 @@ function normalizeNotes(items = []) {
 
 .change-type--added {
   color: #bbf7d0;
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.18);
 }
 
 .change-type--changed {
   color: #bae6fd;
-  border-color: rgba(14, 165, 233, 0.35);
-  background: rgba(14, 165, 233, 0.14);
+  border-color: rgba(14, 165, 233, 0.38);
+  background: rgba(14, 165, 233, 0.16);
 }
 
 .change-type--removed {
   color: #fecaca;
-  border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.38);
+  background: rgba(239, 68, 68, 0.18);
 }
 
-.history-list {
-  align-content: start;
-}
-
-.history-card {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.44);
-  padding: 10px;
-}
-
-.history-header h2 {
-  margin: 0;
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.25;
-}
-
-.entry-list {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
+.change-type--fixed {
+  color: #fef08a;
+  border-color: rgba(234, 179, 8, 0.4);
+  background: rgba(234, 179, 8, 0.2);
 }
 
 .coming-row {
@@ -298,9 +430,9 @@ function normalizeNotes(items = []) {
 
 .coming-soon {
   margin-top: 10px;
-  border: 1px dashed rgba(186, 230, 253, 0.35);
+  border: 1px dashed #3a5378;
   border-radius: 9px;
-  background: rgba(8, 47, 73, 0.25);
+  background: rgba(15, 37, 62, 0.72);
   padding: 9px;
 }
 
@@ -366,6 +498,92 @@ function normalizeNotes(items = []) {
   box-shadow: 0 8px 18px rgba(34, 197, 94, 0.24);
 }
 
+.btn-ghost {
+  color: var(--text);
+  background: rgba(20, 30, 46, 0.92);
+  border-color: #3b4f6f;
+}
+
+[data-theme="light"] .changelog {
+  background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+}
+
+[data-theme="light"] .release-card-grid,
+[data-theme="light"] .changelog-list {
+  background: #ffffff;
+  border-color: #b8c6d8;
+}
+
+[data-theme="light"] .meta-chip {
+  background: #ffffff;
+  border-color: #b8c6d8;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .meta-chip--strong {
+  color: #14532d;
+  border-color: #86efac;
+  background: #dcfce7;
+}
+
+[data-theme="light"] .release-card {
+  background: #f8fbff;
+  border-color: #b8c6d8;
+}
+
+[data-theme="light"] .release-card-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .release-card-cta {
+  color: #166534;
+}
+
+[data-theme="light"] .change-item {
+  background: #f8fbff;
+  border-color: #b8c6d8;
+}
+
+[data-theme="light"] .change-type--added {
+  color: #14532d;
+  border-color: #86efac;
+  background: #dcfce7;
+}
+
+[data-theme="light"] .change-type--changed {
+  color: #0c4a6e;
+  border-color: #7dd3fc;
+  background: #e0f2fe;
+}
+
+[data-theme="light"] .change-type--removed {
+  color: #7f1d1d;
+  border-color: #fca5a5;
+  background: #fee2e2;
+}
+
+[data-theme="light"] .change-type--fixed {
+  color: #713f12;
+  border-color: #fcd34d;
+  background: #fef3c7;
+}
+
+[data-theme="light"] .coming-soon {
+  background: #eef6ff;
+  border-color: #9ec5f8;
+}
+
+[data-theme="light"] .coming-soon h3 {
+  color: #0c4a6e;
+}
+
+[data-theme="light"] .btn-ghost {
+  color: #0f172a;
+  background: #f8fbff;
+  border-color: #b8c6d8;
+}
+
 @media (max-width: 680px) {
   .changelog {
     padding: 14px;
@@ -387,6 +605,10 @@ function normalizeNotes(items = []) {
 
   .btn {
     width: 100%;
+  }
+
+  .history-detail-actions {
+    justify-content: stretch;
   }
 }
 </style>

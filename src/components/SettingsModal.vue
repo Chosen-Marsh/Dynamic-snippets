@@ -80,12 +80,13 @@
             <div class="data-tools">
               <div class="toggle-copy">
                 <span class="field-label">Data tools</span>
-                <p class="toggle-help">Import or export your snippets as JSON.</p>
+                <p class="toggle-help">Import or export snippets, folders, global variables, and settings as a versioned pack.</p>
               </div>
               <div class="data-tools-actions">
                 <button class="btn btn-ghost" type="button" @click="handleImport">Import</button>
                 <button class="btn btn-primary" type="button" @click="handleExport">Export</button>
               </div>
+              <p v-if="importStatus" class="data-tools-status">{{ importStatus }}</p>
             </div>
           </div>
 
@@ -137,6 +138,85 @@
           <button class="btn btn-primary" type="button" @click="handleSave">Save</button>
         </footer>
       </section>
+
+      <div
+        v-if="importDialog.visible"
+        class="import-modal-backdrop"
+        :class="{ 'import-modal-backdrop--closing': importDialog.closing }"
+        @mousedown.self="closeImportDialog"
+      >
+        <section
+          class="import-modal"
+          :class="{
+            'import-modal--closing': importDialog.closing,
+            'import-modal--closing-merge': importDialog.closing && importDialog.closeMode === 'merge',
+            'import-modal--closing-overwrite': importDialog.closing && importDialog.closeMode === 'overwrite'
+          }"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Import preview"
+        >
+          <header class="import-modal-header">
+            <h4>Import preview</h4>
+            <button class="settings-close" type="button" @click="closeImportDialog" aria-label="Close">x</button>
+          </header>
+
+          <div class="import-modal-body">
+            <p class="import-meta">Schema {{ importDialog.preview?.schemaVersion || 'unknown' }}</p>
+            <div class="import-counts">
+              <p><strong>Total snippets:</strong> {{ importDialog.preview?.counts?.totalSnippets ?? 0 }}</p>
+              <p><strong>Folders:</strong> {{ importDialog.preview?.counts?.folders ?? 0 }}</p>
+              <p><strong>Global variables:</strong> {{ importDialog.preview?.counts?.globalVariables ?? 0 }}</p>
+              <p><strong>Settings fields:</strong> {{ importDialog.preview?.counts?.settings ?? 0 }}</p>
+            </div>
+
+            <div v-if="importDialog.preview?.mergeCheck" class="import-merge-check">
+              <p><strong>Merge checks</strong></p>
+              <ul>
+                <li>ID conflicts: {{ importDialog.preview.mergeCheck.idConflicts }}</li>
+                <li>Global variable key conflicts: {{ importDialog.preview.mergeCheck.variableConflicts }}</li>
+                <li>Settings changes: {{ importDialog.preview.mergeCheck.settingsChanges }}</li>
+              </ul>
+            </div>
+
+            <div v-if="importDialog.preview?.validation?.warnings?.length" class="import-warning-box">
+              <p><strong>Warnings</strong></p>
+              <ul>
+                <li v-for="(warning, index) in importDialog.preview.validation.warnings" :key="`warning-${index}`">{{ warning }}</li>
+              </ul>
+            </div>
+
+            <div v-if="importDialog.preview?.validation?.errors?.length" class="import-error-box">
+              <p><strong>Import blocked</strong></p>
+              <ul>
+                <li v-for="(error, index) in importDialog.preview.validation.errors" :key="`error-${index}`">{{ error }}</li>
+              </ul>
+            </div>
+          </div>
+
+          <footer class="import-modal-footer">
+            <button class="btn btn-ghost" type="button" @click="closeImportDialog" :disabled="importDialog.busy">Cancel</button>
+            <button
+              class="btn btn-warn"
+              :class="{ 'btn-action--active': importDialog.busy && importDialog.closeMode === 'overwrite' }"
+              type="button"
+              @click="runImport('overwrite')"
+              :disabled="importDialog.busy || (importDialog.preview?.validation?.errors?.length ?? 0) > 0"
+            >
+              {{ importDialog.busy && importDialog.closeMode === 'overwrite' ? 'Overwriting...' : 'Overwrite' }}
+            </button>
+            <button
+              class="btn btn-primary"
+              :class="{ 'btn-action--active': importDialog.busy && importDialog.closeMode === 'merge' }"
+              type="button"
+              @click="runImport('merge')"
+              :disabled="importDialog.busy || (importDialog.preview?.validation?.errors?.length ?? 0) > 0"
+            >
+              {{ importDialog.busy && importDialog.closeMode === 'merge' ? 'Merging...' : 'Merge' }}
+            </button>
+          </footer>
+        </section>
+      </div>
     </div>
   </teleport>
 </template>
@@ -161,8 +241,17 @@ const activeTab = ref('general');
 const form = ref({ ...DEFAULTS });
 const analyticsEnabled = ref(false);
 const globalVarRows = ref([]);
+const importStatus = ref('');
+const importDialog = ref({
+  visible: false,
+  rawText: '',
+  preview: null,
+  busy: false,
+  closing: false,
+  closeMode: null
+});
 
-const { exportData: exportDataRaw, importData: importDataRaw } = useImportExport(
+const { exportData: exportDataRaw, selectImportFile, getImportPreview, importData } = useImportExport(
   snippetManager,
   async () => {
     emit('import-completed');
@@ -175,7 +264,63 @@ async function handleExport() {
 }
 
 function handleImport() {
-  importDataRaw();
+  openImportDialog();
+}
+
+async function openImportDialog() {
+  importStatus.value = '';
+  const text = await selectImportFile();
+  if (!text) return;
+
+  try {
+    const preview = await getImportPreview(text);
+    importDialog.value = {
+      visible: true,
+      rawText: text,
+      preview,
+      busy: false,
+      closing: false,
+      closeMode: null
+    };
+  } catch (error) {
+    importStatus.value = error?.message || 'Import preview failed. Please verify the file format.';
+  }
+}
+
+function closeImportDialog(force = false) {
+  if (importDialog.value.busy && !force) return;
+  importDialog.value = {
+    visible: false,
+    rawText: '',
+    preview: null,
+    busy: false,
+    closing: false,
+    closeMode: null
+  };
+}
+
+async function runImport(mode) {
+  if (!importDialog.value.rawText) return;
+  importDialog.value.closeMode = mode;
+  importDialog.value.busy = true;
+  importStatus.value = '';
+
+  try {
+    await importData(importDialog.value.rawText, mode);
+    importDialog.value.busy = false;
+    importDialog.value.closing = true;
+    importStatus.value = mode === 'merge'
+      ? 'Import complete: merged with your existing data.'
+      : 'Import complete: existing data overwritten with imported pack.';
+    await new Promise((resolve) => setTimeout(resolve, 260));
+    closeImportDialog(true);
+  } catch (error) {
+    importDialog.value.closeMode = null;
+    importDialog.value.closing = false;
+    importStatus.value = error?.message || 'Import failed. Please verify the file format.';
+  } finally {
+    importDialog.value.busy = false;
+  }
 }
 
 function addGlobalVarRow() {
@@ -404,6 +549,167 @@ function close() {
   display: flex;
   gap: 8px;
   justify-content: flex-start;
+}
+
+.data-tools-status {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.import-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 16, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 4;
+  padding: 12px;
+}
+
+.import-modal-backdrop--closing {
+  animation: importBackdropOut 240ms ease forwards;
+  pointer-events: none;
+}
+
+.import-modal {
+  width: min(440px, 100%);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.import-modal--closing {
+  animation: importModalOut 260ms cubic-bezier(0.3, 0.75, 0.35, 1) forwards;
+}
+
+.import-modal--closing-merge {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35), var(--shadow);
+}
+
+.import-modal--closing-overwrite {
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.35), var(--shadow);
+}
+
+.import-modal-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.import-modal-header h4 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.import-modal-body {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.import-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.import-counts,
+.import-merge-check,
+.import-warning-box,
+.import-error-box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elev-2);
+  padding: 10px;
+}
+
+.import-counts p,
+.import-merge-check p,
+.import-warning-box p,
+.import-error-box p {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.import-counts p + p {
+  margin-top: 5px;
+}
+
+.import-merge-check ul,
+.import-warning-box ul,
+.import-error-box ul {
+  margin: 7px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.import-warning-box {
+  border-color: #eab308;
+  background: rgba(234, 179, 8, 0.08);
+}
+
+.import-error-box {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.import-modal-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-warn {
+  color: #fff7ed;
+  border-color: #ea580c;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.btn-action--active {
+  animation: actionPulse 520ms ease infinite;
+}
+
+@keyframes importModalOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.975);
+  }
+}
+
+@keyframes importBackdropOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes actionPulse {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 .globals-help {

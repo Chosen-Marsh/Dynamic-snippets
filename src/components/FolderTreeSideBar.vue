@@ -54,7 +54,7 @@ const { ctxMenu, openContextMenu, openBodyContextMenu, closeContextMenu } = useC
 
 // ── Drag and drop ──
 const {
-  dragItem, dragOverId, rootDragOver,
+  dragItem, dragOverId, dropPosition, rootDragOver,
   onDragStart, onDragOver, onDragLeave, onDrop,
   onRootDragOver, onRootDragLeave, onRootDrop, onDragEnd
 } = useDragAndDrop(snippetManager, loadFolders);
@@ -241,7 +241,9 @@ defineExpose({ loadFolders });
           'tree-row--active': activeId === item.id,
           'tree-row--folder': item.type === 'folder',
           'tree-row--drag-over': dragOverId === item.id,
-          'tree-row--drop-before': item.type === 'snippet' && dragOverId === item.id && dragItem?.type === 'snippet',
+          'tree-row--drop-before': dragOverId === item.id && dropPosition === 'before',
+          'tree-row--drop-after': dragOverId === item.id && dropPosition === 'after',
+          'tree-row--drop-inside': dragOverId === item.id && dropPosition === 'inside' && item.type === 'folder',
           'tree-row--dragging': dragItem && dragItem.id === item.id && dragItem.type === item.type
         }"
         :style="{ paddingLeft: `${10 + item.depth * 14}px` }"
@@ -425,6 +427,7 @@ defineExpose({ loadFolders });
   align-items: center;
   gap: 5px;
   width: 100%;
+  position: relative;
   padding-top: 4px;
   padding-bottom: 4px;
   padding-right: 10px;
@@ -455,13 +458,34 @@ defineExpose({ loadFolders });
 }
 
 .tree-row--drag-over {
-  background: rgba(34, 197, 94, 0.18);
-  outline: 1px solid var(--accent);
+  background: rgba(34, 197, 94, 0.12);
+  outline: 1px solid rgba(34, 197, 94, 0.4);
   outline-offset: -1px;
-
-.tree-row--drop-before {
-  box-shadow: inset 0 2px 0 var(--accent);
 }
+
+.tree-row--drop-before::before,
+.tree-row--drop-after::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.tree-row--drop-before::before {
+  top: 0;
+}
+
+.tree-row--drop-after::after {
+  bottom: 0;
+}
+
+.tree-row--drop-inside {
+  background: rgba(34, 197, 94, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.25);
 }
 
 .tree-row--dragging {

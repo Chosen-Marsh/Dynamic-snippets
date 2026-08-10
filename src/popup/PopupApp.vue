@@ -25,6 +25,7 @@ const showVersionHistory = ref(false);
 const allChangelogs = ref([]);
 
 async function restoreLastOpenedSnippet() {
+  isRestoringSnippet.value = true;
   try {
     const lastId = await Snippets.getLastOpenedSnippetId();
     if (!lastId) return;
@@ -41,8 +42,6 @@ async function restoreLastOpenedSnippet() {
     isRestoringSnippet.value = false;
   }
 }
-
-restoreLastOpenedSnippet();
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -66,6 +65,12 @@ onMounted(async () => {
     currentChangelog.value = availableChangelog;
     const seenVersion = await changelogState.getSeenVersion();
     showChangelog.value = seenVersion !== APP_VERSION;
+  }
+
+  if (showChangelog.value) {
+    isRestoringSnippet.value = false;
+  } else {
+    await restoreLastOpenedSnippet();
   }
 
   if (!showConsentModal.value) {
@@ -137,6 +142,9 @@ function onSnippetClose() {
 async function dismissChangelog() {
   showChangelog.value = false;
   await changelogState.setSeenVersion(APP_VERSION);
+  if (!snippetID.value) {
+    await restoreLastOpenedSnippet();
+  }
   track('changelog_dismissed', { version: APP_VERSION });
 }
 
