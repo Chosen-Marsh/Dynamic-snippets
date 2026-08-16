@@ -8,6 +8,8 @@ Dynamic Snippets does **not** collect, transmit, or share personal data.
 
 The extension does not send snippet content, variable values, or personal identifiers anywhere.
 
+This privacy policy applies whether the extension is used privately or in a commercial setting. The project is licensed under CC BY 4.0, which permits commercial use with attribution.
+
 Analytics network sending is currently disabled in the shipped build.
 
 ## Data Storage
