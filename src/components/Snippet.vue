@@ -11,6 +11,20 @@
         draggable="false"
       />
 
+      <label class="snippet-command" title="Type this anywhere on the web to trigger this snippet">
+        <span class="snippet-command-slash">/</span>
+        <input
+          type="text"
+          name="command"
+          v-model="command"
+          class="snippet-command-input"
+          placeholder="command"
+          spellcheck="false"
+          draggable="false"
+          @input="sanitizeCommandInput"
+        />
+      </label>
+
       <button
         class="snippet-close"
         type="button"
@@ -105,6 +119,7 @@ const emit = defineEmits(['update:title', 'update:content', 'close']);
 
 const title = ref('Untitled Snippet');
 const content = ref('');
+const command = ref('');
 const isHydrating = ref(false);
 let saveTimer = null;
 const currentSnippetId = ref(null);
@@ -119,6 +134,13 @@ const variableInsertPos = ref(0);
 
 watch(title, (val) => emit('update:title', val));
 watch(content, (val) => emit('update:content', val));
+
+function sanitizeCommandInput() {
+  command.value = command.value
+    .toLowerCase()
+    .replace(/^\/+/, '')
+    .replace(/[^a-z0-9_-]/g, '');
+}
 
 const saveStatusText = computed(() => {
   if (isHydrating.value) return 'Loading...';
@@ -141,7 +163,8 @@ async function persistSnippet(id) {
   try {
     const updated = await snippetManager.updateSnippetData(id, {
       name: title.value,
-      content: content.value
+      content: content.value,
+      command: command.value
     });
     lastSavedAt.value = updated?.updatedAt || new Date().toISOString();
     hasPendingChanges.value = false;
@@ -230,6 +253,7 @@ async function fetchSnippet() {
     currentSnippetId.value = props.id;
     title.value = snippet?.name || 'Untitled Snippet';
     content.value = snippet?.content || '';
+    command.value = snippet?.command || '';
   lastSavedAt.value = snippet?.updatedAt || null;
   hasPendingChanges.value = false;
     } catch (error) {
@@ -246,7 +270,7 @@ watch(() => props.id, async () => {
   fetchSnippet();
 });
 
-watch([title, content], () => {
+watch([title, content, command], () => {
   if (isHydrating.value) return;
   scheduleSave();
 });
@@ -314,6 +338,41 @@ onMounted(() => {
 .snippet-title::placeholder {
   color: var(--muted);
   font-weight: 400;
+}
+
+.snippet-command {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elev);
+}
+
+.snippet-command:focus-within {
+  border-color: var(--accent);
+}
+
+.snippet-command-slash {
+  color: var(--muted);
+  font-size: 11px;
+  font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+}
+
+.snippet-command-input {
+  width: 84px;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 11px;
+  font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+}
+
+.snippet-command-input::placeholder {
+  color: var(--muted);
 }
 
 .snippet-close {

@@ -26,6 +26,15 @@ function asString(value, fallback = '') {
   return String(value);
 }
 
+function normalizeCommand(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\/+/, '')
+    .replace(/[^a-z0-9_-]/g, '')
+    .slice(0, 30);
+}
+
 function normalizeSnippet(raw, now) {
   const source = asObject(raw);
   return {
@@ -33,6 +42,7 @@ function normalizeSnippet(raw, now) {
     type: 'snippet',
     name: asString(source.name, 'Untitled Snippet'),
     content: asString(source.content, ''),
+    command: normalizeCommand(source.command),
     createdAt: asString(source.createdAt, now),
     updatedAt: asString(source.updatedAt, now)
   };

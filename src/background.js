@@ -3,12 +3,32 @@ import { resolveSnippetVariables } from './background/variableResolver.js';
 import { resolveGlobalVariablesInText } from './background/resolveGlobalVariables.js';
 import { insertSnippetText } from './background/snippetInserter.js';
 import { track } from './services/Analytics.js';
+import { ensureInstalledAt } from './services/InstallTracking.js';
 import { hasVariableTokens } from './variables/tokenParser.js';
 
 const STORAGE_FOLDERS_KEY = 'snippetsFolders';
 const STORAGE_SNIPPETS_KEY = 'snippets';
 const GLOBAL_VARS_KEY = 'globalVariables';
 const GLOBAL_TOKEN_REGEX = /\$\{[a-zA-Z0-9_-]+-global\}/;
+const VARIABLE_MODAL_REQUEST = 'dynamic-snippets:request-variable-modal';
+const VARIABLE_MODAL_DISPLAY = 'dynamic-snippets:show-variable-modal';
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== VARIABLE_MODAL_REQUEST) return;
+  if (typeof sender.tab?.id !== 'number' || sender.frameId === 0 || typeof message.rawText !== 'string' || !Array.isArray(message.variables)) {
+    sendResponse({ result: null });
+    return;
+  }
+
+  chrome.tabs.sendMessage(sender.tab.id, {
+    type: VARIABLE_MODAL_DISPLAY,
+    rawText: message.rawText,
+    variables: message.variables
+  }, { frameId: 0 })
+    .then(sendResponse)
+    .catch(() => sendResponse({ result: null }));
+  return true;
+});
 
 function getSnippetAnalyticsFlags(rawText) {
   if (typeof rawText !== 'string') {
@@ -39,7 +59,8 @@ function queueRebuildContextMenu() {
   return rebuildQueue;
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
+  await ensureInstalledAt();
   queueRebuildContextMenu();
 });
 

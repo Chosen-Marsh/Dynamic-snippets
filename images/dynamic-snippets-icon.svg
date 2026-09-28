@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Dynamic Snippets icon</title>
+  <desc id="desc">A yellow lightning bolt between white angle brackets on a blue and teal gradient.</desc>
+  <defs>
+    <linearGradient id="background" x1="10" y1="8" x2="118" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5b5ce2" />
+      <stop offset="1" stop-color="#08b39c" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="31" fill="url(#background)" />
+  <path d="m28 45-14 19 14 19M100 45l14 19-14 19" fill="none" stroke="#f5f7fb" stroke-linecap="round" stroke-linejoin="round" stroke-width="7" />
+  <path d="M72 16 45 68h20l-8 44 27-56H64z" fill="#f6d85a" />
+</svg>

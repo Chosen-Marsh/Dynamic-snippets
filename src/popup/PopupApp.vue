@@ -4,6 +4,7 @@ import FolderTreeSideBar from '../components/FolderTreeSideBar.vue';
 import Welcome from '../components/Welcome.vue';
 import ChangelogPanel from '../components/ChangelogPanel.vue';
 import AnalyticsConsentModal from '../components/AnalyticsConsentModal.vue';
+import RatePromptModal from '../components/RatePromptModal.vue';
 import settings from '../services/Settings.js';
 import Snippets from '../services/Snippets.js';
 import changelogState from '../services/ChangeLogState.js';
@@ -11,6 +12,7 @@ import { APP_VERSION } from '../version.js';
 import { getAllChangelogs, getChangelogByVersion } from '../changelogs/index.js';
 import { hasConsentBeenSetAnywhere, setConsent } from '../services/AnalyticsConsent.js';
 import { ANALYTICS_ENABLED, track } from '../services/Analytics.js';
+import { ensureInstalledAt, shouldShowRatePrompt, markRatePromptAccepted, markRatePromptDismissed, RATE_URL } from '../services/InstallTracking.js';
 import { ref, computed, onMounted } from 'vue';
 
 const sidebarRef = ref(null);
@@ -18,6 +20,7 @@ const snippetID = ref(null);
 const snippetTitle = ref('');
 const isRestoringSnippet = ref(true);
 const showConsentModal = ref(false);
+const showRatePrompt = ref(false);
 const currentSettings = ref({ theme: 'dark', debounceMs: 250 });
 const currentChangelog = ref(null);
 const showChangelog = ref(false);
@@ -47,7 +50,14 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
 }
 
+async function maybeShowRatePrompt() {
+  if (showConsentModal.value || showChangelog.value || showRatePrompt.value) return;
+  showRatePrompt.value = await shouldShowRatePrompt();
+}
+
 onMounted(async () => {
+  await ensureInstalledAt();
+
   const s = await settings.get();
   currentSettings.value = s;
   applyTheme(s.theme);
@@ -73,6 +83,8 @@ onMounted(async () => {
     await restoreLastOpenedSnippet();
   }
 
+  await maybeShowRatePrompt();
+
   if (!showConsentModal.value) {
     track('popup_opened');
   }
@@ -81,6 +93,7 @@ onMounted(async () => {
 function onConsentAccept() {
   setConsent(true);
   showConsentModal.value = false;
+  maybeShowRatePrompt();
   track('consent_granted');
   track('popup_opened');
 }
@@ -88,6 +101,7 @@ function onConsentAccept() {
 function onConsentDecline() {
   setConsent(false);
   showConsentModal.value = false;
+  maybeShowRatePrompt();
 }
 
 function onSettingsSaved(s) {
@@ -98,6 +112,30 @@ function onSettingsSaved(s) {
 
 function onAnalyticsEvent(action) {
   track(action);
+}
+
+async function onRateAccept() {
+  showRatePrompt.value = false;
+  await markRatePromptAccepted();
+
+  if (chrome?.tabs?.create) {
+    chrome.tabs.create({ url: RATE_URL });
+    return;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.open(RATE_URL, '_blank', 'noopener,noreferrer');
+  }
+}
+
+async function onRateDismiss() {
+  showRatePrompt.value = false;
+  await markRatePromptDismissed();
+}
+
+async function onRateLater() {
+  showRatePrompt.value = false;
+  await markRatePromptDismissed();
 }
 
 const liveSnippet = computed(() => {
@@ -145,6 +183,7 @@ async function dismissChangelog() {
   if (!snippetID.value) {
     await restoreLastOpenedSnippet();
   }
+  await maybeShowRatePrompt();
   track('changelog_dismissed', { version: APP_VERSION });
 }
 
@@ -164,6 +203,12 @@ function closeVersionHistory() {
       :visible="showConsentModal"
       @accept="onConsentAccept"
       @decline="onConsentDecline"
+    />
+    <RatePromptModal
+      :visible="showRatePrompt"
+      @accept="onRateAccept"
+      @dismiss="onRateDismiss"
+      @later="onRateLater"
     />
     <FolderTreeSideBar
       ref="sidebarRef"

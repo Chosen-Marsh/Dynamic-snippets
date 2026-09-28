@@ -354,12 +354,22 @@ class Snippets {
         return result[this.snippetsKey] || [];
     }
 
+    _normalizeCommand(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/^\/+/, '')
+            .replace(/[^a-z0-9_-]/g, '')
+            .slice(0, 30);
+    }
+
     async createSnippet(snippetData, folderId = null) {
         const now = this._now();
         const snippet = {
             id: Date.now(),
             name: snippetData.name || 'Unnamed Snippet',
             content: snippetData.content || '',
+            command: this._normalizeCommand(snippetData.command),
             type: 'snippet',
             createdAt: now,
             updatedAt: now
@@ -405,18 +415,21 @@ class Snippets {
         if (!updates || typeof updates !== 'object') throw new Error('Updates object is required.');
 
         const sid = String(id);
+        const updatesToApply = Object.prototype.hasOwnProperty.call(updates, 'command')
+            ? { ...updates, command: this._normalizeCommand(updates.command) }
+            : updates;
         const { snippets, folders } = await this._getAll();
 
         const rootSnippet = snippets.find(s => String(s.id) === sid && s.type === 'snippet');
         if (rootSnippet) {
-            Object.assign(rootSnippet, updates, { updatedAt: this._now() });
+            Object.assign(rootSnippet, updatesToApply, { updatedAt: this._now() });
             await storage.setLocal({ [this.snippetsKey]: snippets });
             return rootSnippet;
         }
 
         const nestedSnippet = this._findSnippet(folders, sid);
         if (!nestedSnippet) throw new Error('Snippet not found.');
-        Object.assign(nestedSnippet, updates, { updatedAt: this._now() });
+        Object.assign(nestedSnippet, updatesToApply, { updatedAt: this._now() });
         await storage.setLocal({ [this.snippetsFoldersKey]: folders });
         return nestedSnippet;
     }
