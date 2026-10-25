@@ -1,10 +1,12 @@
+import { getBackgroundMessages } from './messages.js';
+
 const ROOT_MENU_ID = 'dynamic-snippets-root';
 const MENU_CONTEXTS = ['all'];
 
 const snippetPayloadByMenuId = new Map();
 
-function clipTitle(title, max = 60) {
-  if (!title) return 'Untitled Snippet';
+function clipTitle(title, fallback, max = 60) {
+  if (!title) return fallback;
   return title.length > max ? `${title.slice(0, max - 1)}...` : title;
 }
 
@@ -47,34 +49,34 @@ function createMenu(options) {
   });
 }
 
-function registerSnippetMenu(snippet, parentId = ROOT_MENU_ID) {
+function registerSnippetMenu(snippet, ui, parentId = ROOT_MENU_ID) {
   const snippetId = `snippet:${snippet.id}`;
   snippetPayloadByMenuId.set(snippetId, snippet.content || '');
 
   return createMenu({
     id: snippetId,
     parentId,
-    title: clipTitle(snippet.name),
+    title: clipTitle(snippet.name, ui.untitledSnippet),
     contexts: MENU_CONTEXTS
   });
 }
 
-function registerFolderMenus(folder, parentId = ROOT_MENU_ID) {
+function registerFolderMenus(folder, ui, parentId = ROOT_MENU_ID) {
   const folderMenuId = `folder:${folder.id}`;
 
   const tasks = [createMenu({
     id: folderMenuId,
     parentId,
-    title: clipTitle(folder.name),
+    title: clipTitle(folder.name, ui.untitledSnippet),
     contexts: MENU_CONTEXTS
   })];
 
   const children = Array.isArray(folder.children) ? folder.children : [];
   for (const child of children) {
     if (child.type === 'folder') {
-      tasks.push(registerFolderMenus(child, folderMenuId));
+      tasks.push(registerFolderMenus(child, ui, folderMenuId));
     } else if (child.type === 'snippet') {
-      tasks.push(registerSnippetMenu(child, folderMenuId));
+      tasks.push(registerSnippetMenu(child, ui, folderMenuId));
     }
   }
 
@@ -94,28 +96,29 @@ async function getStoredTree() {
 
 async function rebuildContextMenu() {
   await removeAllMenus();
+  const ui = await getBackgroundMessages();
 
   await createMenu({
     id: ROOT_MENU_ID,
-    title: 'Insert Snippet',
+    title: ui.insertSnippetMenu,
     contexts: MENU_CONTEXTS
   });
 
   const { folders, snippets } = await getStoredTree();
 
   for (const folder of folders) {
-    await registerFolderMenus(folder, ROOT_MENU_ID);
+    await registerFolderMenus(folder, ui, ROOT_MENU_ID);
   }
 
   for (const snippet of snippets) {
-    await registerSnippetMenu(snippet, ROOT_MENU_ID);
+    await registerSnippetMenu(snippet, ui, ROOT_MENU_ID);
   }
 
   if (!folders.length && !snippets.length) {
     await createMenu({
       id: 'snippets-empty',
       parentId: ROOT_MENU_ID,
-      title: 'No snippets available',
+      title: ui.noSnippets,
       contexts: MENU_CONTEXTS,
       enabled: false
     });

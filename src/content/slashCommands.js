@@ -10,6 +10,27 @@
   const SNIPPETS_KEY = 'snippets';
   const FOLDERS_KEY = 'snippetsFolders';
   const GLOBAL_VARS_KEY = 'globalVariables';
+  const MESSAGES_KEY = 'contentMessages';
+
+  // English fallbacks; the popup stores the active locale's `content` messages under MESSAGES_KEY.
+  const DEFAULT_MESSAGES = {
+    untitledSnippet: 'Untitled Snippet',
+    fillVariablesTitle: 'Fill Snippet Variables',
+    preview: 'Preview',
+    cancel: 'Cancel',
+    insert: 'Insert',
+    enterValue: 'Enter value',
+    datePlaceholder: 'YYYY-MM-DD'
+  };
+  let messages = { ...DEFAULT_MESSAGES };
+
+  function applyMessages(stored) {
+    messages = { ...DEFAULT_MESSAGES };
+    if (!stored || typeof stored !== 'object') return;
+    for (const key of Object.keys(DEFAULT_MESSAGES)) {
+      if (typeof stored[key] === 'string') messages[key] = stored[key];
+    }
+  }
   const VARIABLE_MODAL_REQUEST = 'dynamic-snippets:request-variable-modal';
   const VARIABLE_MODAL_DISPLAY = 'dynamic-snippets:show-variable-modal';
   const QUERY_REGEX = /(?:^|\s)\/([a-zA-Z0-9_-]{0,30})$/;
@@ -39,7 +60,7 @@
       if (item.type === 'snippet' && item.command) {
         acc.push({
           id: item.id,
-          name: item.name || 'Untitled Snippet',
+          name: item.name || messages.untitledSnippet,
           command: String(item.command).toLowerCase(),
           content: item.content || ''
         });
@@ -70,13 +91,29 @@
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
+      if (changes[MESSAGES_KEY]) {
+        applyMessages(changes[MESSAGES_KEY].newValue);
+        refreshCommandIndex();
+      }
       if (changes[SNIPPETS_KEY] || changes[FOLDERS_KEY]) refreshCommandIndex();
     });
   } catch {
     markContextInvalidated();
   }
 
-  refreshCommandIndex();
+  async function loadMessages() {
+    if (!isExtensionContextValid()) return;
+    try {
+      const result = await chrome.storage.local.get(MESSAGES_KEY);
+      applyMessages(result[MESSAGES_KEY]);
+    } catch (error) {
+      if (String(error?.message).includes('Extension context invalidated')) {
+        markContextInvalidated();
+      }
+    }
+  }
+
+  loadMessages().then(refreshCommandIndex);
 
   async function getGlobalVariables() {
     if (!isExtensionContextValid()) return {};
@@ -418,7 +455,7 @@
 
       const title = document.createElement('h3');
       title.className = 'ds-title';
-      title.textContent = 'Fill Snippet Variables';
+      title.textContent = messages.fillVariablesTitle;
 
       const closeButton = document.createElement('button');
       closeButton.type = 'button';
@@ -467,7 +504,7 @@
           input = document.createElement('input');
           input.type = variable.type === 'date' ? 'date' : 'text';
           input.value = variable.defaultValue;
-          input.placeholder = variable.type === 'date' ? 'YYYY-MM-DD' : 'Enter value';
+          input.placeholder = variable.type === 'date' ? messages.datePlaceholder : messages.enterValue;
         }
 
         styleInputElement(input, variable.type);
@@ -477,7 +514,7 @@
         if (!firstInput) firstInput = input;
       }
 
-      const previewLabel = createFieldLabel('Preview');
+      const previewLabel = createFieldLabel(messages.preview);
       const preview = document.createElement('pre');
       preview.className = 'ds-preview';
       previewLabel.appendChild(preview);
@@ -497,12 +534,12 @@
 
       const cancelButton = document.createElement('button');
       cancelButton.type = 'button';
-      cancelButton.textContent = 'Cancel';
+      cancelButton.textContent = messages.cancel;
       cancelButton.className = 'ds-btn ds-btn-cancel';
 
       const insertButton = document.createElement('button');
       insertButton.type = 'button';
-      insertButton.textContent = 'Insert';
+      insertButton.textContent = messages.insert;
       insertButton.className = 'ds-btn ds-btn-insert';
 
       function cleanup(result) {

@@ -4,6 +4,7 @@ const SETTINGS_KEY = 'extensionSettings';
 
 const DEFAULTS = {
   theme: 'dark',
+  language: 'en',
   debounceMs: 250
 };
 

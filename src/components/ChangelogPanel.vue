@@ -1,23 +1,23 @@
 <template>
-  <section class="changelog" :aria-label="historyMode ? 'Version history' : `What's new`">
+  <section class="changelog" :aria-label="historyMode ? $t('changelog.versionHistory') : $t('changelog.whatsNew')">
     <div class="ambient ambient-a" />
     <div class="ambient ambient-b" />
 
     <header class="changelog-header">
-      <p class="eyebrow">{{ historyMode ? 'Release Notes' : `What's New` }}</p>
+      <p class="eyebrow">{{ historyMode ? $t('changelog.releaseNotes') : $t('changelog.whatsNew') }}</p>
       <h1>
         {{ historyMode
-          ? (selectedHistoryEntry ? selectedHistoryEntry.title : 'Version history')
-          : (changelog?.title || 'Latest updates') }}
+          ? (selectedHistoryEntry ? selectedHistoryEntry.title : $t('changelog.versionHistory'))
+          : (changelog?.title || $t('changelog.latestUpdates')) }}
       </h1>
 
       <div v-if="historyMode && selectedHistoryEntry" class="meta-row">
-        <span class="meta-chip meta-chip--strong">Version {{ selectedHistoryEntry.version }}</span>
+        <span class="meta-chip meta-chip--strong">{{ $t('changelog.version', { version: selectedHistoryEntry.version }) }}</span>
         <span class="meta-chip">{{ selectedHistoryEntry.date }}</span>
       </div>
 
       <div v-else-if="!historyMode" class="meta-row">
-        <span class="meta-chip meta-chip--strong">Version {{ changelog?.version }}</span>
+        <span class="meta-chip meta-chip--strong">{{ $t('changelog.version', { version: changelog?.version }) }}</span>
         <span class="meta-chip">{{ changelog?.date }}</span>
       </div>
     </header>
@@ -32,16 +32,16 @@
       >
         <h2 class="release-card-title">{{ entry.title }}</h2>
         <div class="release-card-meta">
-          <span class="meta-chip meta-chip--strong">Version {{ entry.version }}</span>
+          <span class="meta-chip meta-chip--strong">{{ $t('changelog.version', { version: entry.version }) }}</span>
           <span class="meta-chip">{{ entry.date }}</span>
         </div>
-        <p class="release-card-cta">Open changelog</p>
+        <p class="release-card-cta">{{ $t('changelog.openChangelog') }}</p>
       </button>
     </div>
 
     <div v-else-if="historyMode && selectedHistoryEntry" class="history-detail-wrap">
       <div class="history-detail-actions">
-        <button class="btn btn-ghost" type="button" @click="closeHistoryEntry">Close changelog</button>
+        <button class="btn btn-ghost" type="button" @click="closeHistoryEntry">{{ $t('changelog.closeChangelog') }}</button>
       </div>
 
       <ul class="changelog-list">
@@ -50,12 +50,12 @@
           :key="index"
           class="change-item"
         >
-          <span class="change-type" :class="`change-type--${item.type}`">{{ item.type }}</span>
+          <span class="change-type" :class="`change-type--${item.type}`">{{ $t(`changelog.types.${item.type}`) }}</span>
           <span>{{ item.text }}</span>
         </li>
         <li v-if="normalizeNotes(selectedHistoryEntry.comingSoon).length" class="coming-row">
           <section class="coming-soon">
-            <h3>Coming soon</h3>
+            <h3>{{ $t('changelog.comingSoon') }}</h3>
             <ul class="coming-list">
               <li
                 v-for="(note, index) in normalizeNotes(selectedHistoryEntry.comingSoon)"
@@ -72,12 +72,12 @@
 
     <ul v-else class="changelog-list">
       <li v-for="(item, index) in normalizeChanges(changelog?.changes || [])" :key="index" class="change-item">
-        <span class="change-type" :class="`change-type--${item.type}`">{{ item.type }}</span>
+        <span class="change-type" :class="`change-type--${item.type}`">{{ $t(`changelog.types.${item.type}`) }}</span>
         <span>{{ item.text }}</span>
       </li>
       <li v-if="normalizeNotes(changelog?.comingSoon).length" class="coming-row">
         <section class="coming-soon">
-          <h3>Coming soon</h3>
+          <h3>{{ $t('changelog.comingSoon') }}</h3>
           <ul class="coming-list">
             <li v-for="(note, index) in normalizeNotes(changelog?.comingSoon)" :key="`coming-${index}`" class="coming-item">
               {{ note }}
@@ -90,11 +90,11 @@
     <footer class="changelog-footer">
       <p class="helper">
         {{ historyMode
-          ? (selectedHistoryEntry ? 'Viewing release details.' : 'Choose a release card to view full changes.')
-          : 'You will only see this once per version.' }}
+          ? (selectedHistoryEntry ? $t('changelog.viewingDetails') : $t('changelog.chooseRelease'))
+          : $t('changelog.onlyOnce') }}
       </p>
       <button class="btn btn-primary" type="button" @click="emit(historyMode ? 'closeHistory' : 'dismiss')">
-        {{ historyMode ? 'Close history' : 'Got it' }}
+        {{ historyMode ? $t('changelog.closeHistory') : $t('changelog.gotIt') }}
       </button>
     </footer>
   </section>

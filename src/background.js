@@ -5,10 +5,12 @@ import { insertSnippetText } from './background/snippetInserter.js';
 import { track } from './services/Analytics.js';
 import { ensureInstalledAt } from './services/InstallTracking.js';
 import { hasVariableTokens } from './variables/tokenParser.js';
+import { getBackgroundMessages, getContentMessages, SETTINGS_KEY } from './background/messages.js';
 
 const STORAGE_FOLDERS_KEY = 'snippetsFolders';
 const STORAGE_SNIPPETS_KEY = 'snippets';
 const GLOBAL_VARS_KEY = 'globalVariables';
+const CONTENT_MESSAGES_KEY = 'contentMessages';
 const GLOBAL_TOKEN_REGEX = /\$\{[a-zA-Z0-9_-]+-global\}/;
 const VARIABLE_MODAL_REQUEST = 'dynamic-snippets:request-variable-modal';
 const VARIABLE_MODAL_DISPLAY = 'dynamic-snippets:show-variable-modal';
@@ -68,11 +70,37 @@ chrome.runtime.onStartup.addListener(() => {
   queueRebuildContextMenu();
 });
 
+// The content script can't import locale files, so keep its strings in storage in sync with the language.
+async function syncContentMessages() {
+  try {
+    const [next, stored] = await Promise.all([
+      getContentMessages(),
+      chrome.storage.local.get(CONTENT_MESSAGES_KEY)
+    ]);
+    if (JSON.stringify(stored[CONTENT_MESSAGES_KEY]) !== JSON.stringify(next)) {
+      await chrome.storage.local.set({ [CONTENT_MESSAGES_KEY]: next });
+    }
+  } catch (error) {
+    console.error('Failed to sync content messages:', error);
+  }
+}
+
+syncContentMessages();
+
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
-  if (changes[STORAGE_FOLDERS_KEY] || changes[STORAGE_SNIPPETS_KEY]) {
-    queueRebuildContextMenu();
+  let rebuild = Boolean(changes[STORAGE_FOLDERS_KEY] || changes[STORAGE_SNIPPETS_KEY]);
+
+  if (changes[SETTINGS_KEY]) {
+    const before = changes[SETTINGS_KEY].oldValue?.language;
+    const after = changes[SETTINGS_KEY].newValue?.language;
+    if (before !== after) {
+      syncContentMessages();
+      rebuild = true;
+    }
   }
+
+  if (rebuild) queueRebuildContextMenu();
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -103,10 +131,15 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       const globals = await getGlobalVariables();
       const textWithGlobals = resolveGlobalVariablesInText(text, globals);
 
+      const [contentMessages, backgroundMessages] = await Promise.all([
+        getContentMessages(),
+        getBackgroundMessages()
+      ]);
+
       const results = await chrome.scripting.executeScript({
         target: topFrameTarget,
         func: resolveSnippetVariables,
-        args: [textWithGlobals]
+        args: [textWithGlobals, contentMessages]
       });
 
       const resolvedText = results?.[0]?.result;
@@ -115,7 +148,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       await chrome.scripting.executeScript({
         target,
         func: insertSnippetText,
-        args: [resolvedText]
+        args: [resolvedText, backgroundMessages]
       });
 
       track('context_menu_inserted', {

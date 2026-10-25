@@ -1,4 +1,14 @@
-export function resolveSnippetVariables(text) {
+// Runs inside the page via chrome.scripting.executeScript, so it must not reference imports or module scope.
+export function resolveSnippetVariables(text, messages = {}) {
+  const ui = {
+    fillVariablesTitle: 'Fill Snippet Variables',
+    preview: 'Preview',
+    cancel: 'Cancel',
+    insert: 'Insert',
+    enterValue: 'Enter value',
+    datePlaceholder: 'YYYY-MM-DD',
+    ...messages
+  };
   function parseVariables(rawText) {
     const variables = [];
 
@@ -288,7 +298,7 @@ export function resolveSnippetVariables(text) {
 
       const title = document.createElement('h3');
       title.className = 'ds-title';
-      title.textContent = 'Fill Snippet Variables';
+      title.textContent = ui.fillVariablesTitle;
 
       const closeButton = document.createElement('button');
       closeButton.type = 'button';
@@ -337,7 +347,7 @@ export function resolveSnippetVariables(text) {
           input = document.createElement('input');
           input.type = variable.type === 'date' ? 'date' : 'text';
           input.value = variable.defaultValue;
-          input.placeholder = variable.type === 'date' ? 'YYYY-MM-DD' : 'Enter value';
+          input.placeholder = variable.type === 'date' ? ui.datePlaceholder : ui.enterValue;
         }
 
         styleInputElement(input, variable.type);
@@ -347,7 +357,7 @@ export function resolveSnippetVariables(text) {
         if (!firstInput) firstInput = input;
       }
 
-      const previewLabel = createFieldLabel('Preview');
+      const previewLabel = createFieldLabel(ui.preview);
       const preview = document.createElement('pre');
       preview.className = 'ds-preview';
       previewLabel.appendChild(preview);
@@ -367,12 +377,12 @@ export function resolveSnippetVariables(text) {
 
       const cancelButton = document.createElement('button');
       cancelButton.type = 'button';
-      cancelButton.textContent = 'Cancel';
+      cancelButton.textContent = ui.cancel;
       cancelButton.className = 'ds-btn ds-btn-cancel';
 
       const insertButton = document.createElement('button');
       insertButton.type = 'button';
-      insertButton.textContent = 'Insert';
+      insertButton.textContent = ui.insert;
       insertButton.className = 'ds-btn ds-btn-insert';
 
       function cleanup(result) {

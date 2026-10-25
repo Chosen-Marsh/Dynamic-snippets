@@ -5,22 +5,22 @@
         <header class="rate-header">
           <div class="rate-icon" aria-hidden="true">★</div>
           <div class="rate-heading">
-            <p class="rate-eyebrow">Quick feedback</p>
-            <h2 id="rate-title">Love Dynamic Snippets?</h2>
+            <p class="rate-eyebrow">{{ $t('rate.eyebrow') }}</p>
+            <h2 id="rate-title">{{ $t('rate.title') }}</h2>
           </div>
         </header>
 
         <div class="rate-body">
           <p class="rate-text">
-            You’ve been using it for a day. If it has saved you time, a quick review would mean a lot.
+            {{ $t('rate.text') }}
           </p>
-          <div class="stars" aria-label="Five star rating">★★★★★</div>
+          <div class="stars" :aria-label="$t('rate.starsLabel')">★★★★★</div>
         </div>
 
         <footer class="rate-footer">
-          <button type="button" class="btn btn-secondary" @click="emit('dismiss')">No thanks</button>
-          <button type="button" class="btn btn-ghost" @click="emit('later')">Maybe later</button>
-          <button type="button" class="btn btn-primary" @click="emit('accept')">Rate 5 stars</button>
+          <button type="button" class="btn btn-secondary" @click="emit('dismiss')">{{ $t('rate.dismiss') }}</button>
+          <button type="button" class="btn btn-ghost" @click="emit('later')">{{ $t('rate.later') }}</button>
+          <button type="button" class="btn btn-primary" @click="emit('accept')">{{ $t('rate.accept') }}</button>
         </footer>
       </section>
     </div>

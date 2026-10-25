@@ -1,22 +1,22 @@
 <template>
 	<teleport to="body">
 		<div v-if="visible" class="var-modal-overlay" @mousedown.self="emit('close')">
-			<section class="var-modal" role="dialog" aria-modal="true" aria-label="Insert global variable">
+			<section class="var-modal" role="dialog" aria-modal="true" 			:aria-label="$t('globalVarModal.ariaLabel')">
 				<header class="var-modal-header">
-					<h3>Insert Global Variable</h3>
-					<button class="var-modal-close" type="button" @click="emit('close')" aria-label="Close">
+								<h3>{{ $t('globalVarModal.title') }}</h3>
+								<button class="var-modal-close" type="button" @click="emit('close')" :aria-label="$t('common.close')">
 						x
 					</button>
 				</header>
 
 				<div class="var-modal-body">
 					<p class="help-text">
-						Pick a global variable from Settings. Missing keys paste as <code>undefined</code> at
-						insert time.
+									{{ $t('globalVarModal.help') }} <code>undefined</code>
+									{{ $t('globalVarModal.helpAfter') }}
 					</p>
 
 					<label v-if="globalVarOptions.length" class="field">
-						<span class="field-label">Global variable</span>
+									<span class="field-label">{{ $t('globalVarModal.label') }}</span>
 						<select ref="keySelect" v-model="selectedKey" class="field-input">
 							<option v-for="option in globalVarOptions" :key="option.key" :value="option.key">
 								{{ option.label }}
@@ -25,19 +25,19 @@
 					</label>
 
 					<p v-else class="empty-state">
-						No global variables yet. Add them in Settings → Global Variables.
+									{{ $t('globalVarModal.empty') }}
 					</p>
 
 					<div v-if="selectedKey" class="preview-wrap">
-						<span class="field-label">Preview</span>
+									<span class="field-label">{{ $t('common.preview') }}</span>
 						<code class="preview">{{ tokenPreview }}</code>
 					</div>
 				</div>
 
 				<footer class="var-modal-footer">
-					<button class="btn btn-ghost" type="button" @click="emit('close')">Cancel</button>
+								<button class="btn btn-ghost" type="button" @click="emit('close')">{{ $t('common.cancel') }}</button>
 					<button class="btn btn-primary" type="button" :disabled="!canInsert" @click="handleInsert">
-						Insert
+									{{ $t('common.insert') }}
 					</button>
 				</footer>
 			</section>

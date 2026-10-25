@@ -1,7 +1,7 @@
 export const VARIABLE_TYPE_OPTIONS = [
-  { value: 'dropdown', label: 'Dropdown with options' },
-  { value: 'text', label: 'Text input' },
-  { value: 'date', label: 'Date input' }
+  { value: 'dropdown', labelKey: 'varModal.types.dropdown' },
+  { value: 'text', labelKey: 'varModal.types.text' },
+  { value: 'date', labelKey: 'varModal.types.date' }
 ];
 
 export function normalizeVariableType(type) {

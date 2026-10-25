@@ -15,38 +15,38 @@
             </svg>
           </div>
           <div class="consent-heading">
-            <p class="consent-eyebrow">Optional analytics</p>
-            <h2 id="consent-title">Help us improve Dynamic Snippets</h2>
+            <p class="consent-eyebrow">{{ $t('analytics.consentEyebrowOpt') }}</p>
+            <h2 id="consent-title">{{ $t('analytics.consentTitle') }}</h2>
             <p class="consent-lead">
-              We collect anonymous usage events only, and never capture your snippets or personal data.
+              {{ $t('analytics.consentDescription') }}
             </p>
           </div>
         </header>
 
         <div class="consent-body">
-          <div class="consent-grid" aria-label="Data collection details">
+          <div class="consent-grid" :aria-label="$t('analytics.detailsLabel')">
             <article class="consent-card">
-              <h3>What we collect</h3>
+              <h3>{{ $t('analytics.collectTitle') }}</h3>
               <ul>
-                <li>Feature and button usage</li>
-                <li>Local timestamps</li>
+                <li>{{ $t('analytics.collectUsage') }}</li>
+                <li>{{ $t('analytics.collectTimestamps') }}</li>
               </ul>
             </article>
             <article class="consent-card consent-card--protected">
-              <h3>What we never collect</h3>
+              <h3>{{ $t('analytics.neverTitle') }}</h3>
               <ul>
-                <li>Snippet content</li>
-                <li>Variable values</li>
-                <li>Personal data</li>
+                <li>{{ $t('analytics.neverSnippets') }}</li>
+                <li>{{ $t('analytics.neverVariables') }}</li>
+                <li>{{ $t('analytics.neverPersonal') }}</li>
               </ul>
             </article>
           </div>
-          <p class="consent-note">Your preference is stored locally in this extension.</p>
+          <p class="consent-note">{{ $t('analytics.note') }}</p>
         </div>
 
         <footer class="consent-footer">
-          <button type="button" class="btn btn-decline" @click="emit('decline')">Not now</button>
-          <button type="button" class="btn btn-accept" @click="emit('accept')">Allow anonymous analytics</button>
+          <button type="button" class="btn btn-decline" @click="emit('decline')">{{ $t('analytics.decline') }}</button>
+          <button type="button" class="btn btn-accept" @click="emit('accept')">{{ $t('analytics.accept') }}</button>
         </footer>
       </section>
     </div>

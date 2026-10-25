@@ -1,4 +1,9 @@
-export async function insertSnippetText(text) {
+export async function insertSnippetText(text, messages = {}) {
+  const ui = {
+    insertCopied: 'Could not insert Snippet. Text copied to clipboard.',
+    insertFailed: 'Could not insert snippet and clipboard copy failed.',
+    ...messages
+  };
 
   function showToast(message, type = 'info') {
     const existing = document.querySelector(
@@ -355,10 +360,10 @@ export async function insertSnippetText(text) {
 
   const copied = await copyTextToClipboard(text);
   if (copied) {
-    showToast('Could not insert Snippet. Text copied to clipboard.', 'error');
+    showToast(ui.insertCopied, 'error');
     return { inserted: false, copied: true };
   }
 
-  showToast('Could not insert snippet and clipboard copy failed.', 'error');
+  showToast(ui.insertFailed, 'error');
   return { inserted: false, copied: false };
 }

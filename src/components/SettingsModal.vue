@@ -1,20 +1,20 @@
 <template>
   <teleport to="body">
     <div v-if="visible" class="settings-overlay" @mousedown.self="close">
-      <section class="settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
+      <section class="settings-modal"       role="dialog" aria-modal="true" :aria-label="$t('settings.title')">
         <header class="settings-header">
-          <h3>Settings</h3>
-          <button class="settings-close" type="button" @click="close" aria-label="Close">x</button>
+                <h3>{{ $t('settings.title') }}</h3>
+                <button class="settings-close" type="button" @click="close" :aria-label="$t('common.close')">x</button>
         </header>
 
-        <nav class="settings-tabs" aria-label="Settings sections">
+              <nav class="settings-tabs" :aria-label="$t('settings.sections')">
           <button
             type="button"
             class="settings-tab"
             :class="{ 'settings-tab--active': activeTab === 'general' }"
             @click="activeTab = 'general'"
           >
-            General
+            {{ $t('settings.tabs.general') }}
           </button>
           <button
             type="button"
@@ -22,7 +22,7 @@
             :class="{ 'settings-tab--active': activeTab === 'data' }"
             @click="activeTab = 'data'"
           >
-            Data
+            {{ $t('settings.tabs.data') }}
           </button>
           <button
             type="button"
@@ -30,22 +30,29 @@
             :class="{ 'settings-tab--active': activeTab === 'globals' }"
             @click="activeTab = 'globals'"
           >
-            Global Variables
+            {{ $t('settings.tabs.globals') }}
           </button>
         </nav>
 
         <div class="settings-body">
           <div v-if="activeTab === 'general'" class="settings-panel">
             <label class="field">
-              <span class="field-label">Theme</span>
+              <span class="field-label">{{ $t('settings.general.theme') }}</span>
               <select v-model="form.theme" class="field-input">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
+                <option value="dark">{{ $t('settings.general.themeDark') }}</option>
+                <option value="light">{{ $t('settings.general.themeLight') }}</option>
+              </select>
+            </label>
+
+            <label v-if="availableLocales.length > 1" class="field">
+              <span class="field-label">{{ $t('settings.general.language') }}</span>
+              <select v-model="form.language" class="field-input">
+                <option v-for="loc in availableLocales" :key="loc.code" :value="loc.code">{{ loc.name }}</option>
               </select>
             </label>
 
             <label class="field">
-              <span class="field-label">Auto-save debounce (ms)</span>
+              <span class="field-label">{{ $t('settings.general.debounce') }}</span>
               <input
                 v-model.number="form.debounceMs"
                 class="field-input"
@@ -58,9 +65,9 @@
 
             <div class="toggle-field">
               <div class="toggle-copy">
-                <span class="field-label">Usage analytics</span>
+                <span class="field-label">{{ $t('settings.general.analytics') }}</span>
                 <p class="toggle-help">
-                  Tracks action names locally only — never snippet content or personal data.
+                  {{ $t('settings.general.analyticsHelp') }}
                 </p>
               </div>
               <button
@@ -79,12 +86,12 @@
           <div v-else-if="activeTab === 'data'" class="settings-panel">
             <div class="data-tools">
               <div class="toggle-copy">
-                <span class="field-label">Data tools</span>
-                <p class="toggle-help">Import or export snippets, folders, global variables, and settings as a versioned pack.</p>
+                <span class="field-label">{{ $t('settings.data.title') }}</span>
+                <p class="toggle-help">{{ $t('settings.data.help') }}</p>
               </div>
               <div class="data-tools-actions">
-                <button class="btn btn-ghost" type="button" @click="handleImport">Import</button>
-                <button class="btn btn-primary" type="button" @click="handleExport">Export</button>
+                <button class="btn btn-ghost" type="button" @click="handleImport">{{ $t('settings.data.import') }}</button>
+                <button class="btn btn-primary" type="button" @click="handleExport">{{ $t('settings.data.export') }}</button>
               </div>
               <p v-if="importStatus" class="data-tools-status">{{ importStatus }}</p>
             </div>
@@ -92,14 +99,14 @@
 
           <div v-else class="settings-panel">
             <p class="globals-help">
-              Define reusable values for <code v-pre>${key-global}</code> tokens. Missing keys paste as
+              {{ $t('settings.globals.helpBefore') }} <code v-pre>${key-global}</code> {{ $t('settings.globals.helpAfter') }}
               <code>undefined</code>.
             </p>
 
             <div v-if="globalVarRows.length" class="globals-list">
               <div class="globals-row globals-row--header">
-                <span>Key</span>
-                <span>Value</span>
+                <span>{{ $t('settings.globals.key') }}</span>
+                <span>{{ $t('settings.globals.value') }}</span>
                 <span />
               </div>
               <div v-for="(row, index) in globalVarRows" :key="index" class="globals-row">
@@ -107,19 +114,19 @@
                   v-model="row.key"
                   class="field-input"
                   type="text"
-                  placeholder="key"
+                  :placeholder="$t('settings.globals.keyPlaceholder')"
                   spellcheck="false"
                 />
                 <input
                   v-model="row.value"
                   class="field-input"
                   type="text"
-                  placeholder="value"
+                  :placeholder="$t('settings.globals.valuePlaceholder')"
                 />
                 <button
                   type="button"
                   class="globals-remove"
-                  title="Remove variable"
+                  :title="$t('settings.globals.remove')"
                   @click="removeGlobalVarRow(index)"
                 >
                   x
@@ -127,15 +134,15 @@
               </div>
             </div>
 
-            <p v-else class="globals-empty">No global variables yet.</p>
+            <p v-else class="globals-empty">{{ $t('settings.globals.empty') }}</p>
 
-            <button type="button" class="btn btn-add" @click="addGlobalVarRow">Add variable</button>
+                        <button type="button" class="btn btn-add" @click="addGlobalVarRow">{{ $t('settings.globals.add') }}</button>
           </div>
         </div>
 
         <footer class="settings-footer">
-          <button class="btn btn-ghost" type="button" @click="close">Cancel</button>
-          <button class="btn btn-primary" type="button" @click="handleSave">Save</button>
+                      <button class="btn btn-ghost" type="button" @click="close">{{ $t('common.cancel') }}</button>
+                      <button class="btn btn-primary" type="button" @click="handleSave">{{ $t('common.save') }}</button>
         </footer>
       </section>
 
@@ -154,40 +161,40 @@
           }"
           role="dialog"
           aria-modal="true"
-          aria-label="Import preview"
+          :aria-label="$t('settings.import.title')"
         >
           <header class="import-modal-header">
-            <h4>Import preview</h4>
-            <button class="settings-close" type="button" @click="closeImportDialog" aria-label="Close">x</button>
+            <h4>{{ $t('settings.import.title') }}</h4>
+            <button class="settings-close" type="button" @click="closeImportDialog" :aria-label="$t('common.close')">x</button>
           </header>
 
           <div class="import-modal-body">
-            <p class="import-meta">Schema {{ importDialog.preview?.schemaVersion || 'unknown' }}</p>
+            <p class="import-meta">{{ $t('settings.import.schema', { version: importDialog.preview?.schemaVersion || $t('settings.import.unknown') }) }}</p>
             <div class="import-counts">
-              <p><strong>Total snippets:</strong> {{ importDialog.preview?.counts?.totalSnippets ?? 0 }}</p>
-              <p><strong>Folders:</strong> {{ importDialog.preview?.counts?.folders ?? 0 }}</p>
-              <p><strong>Global variables:</strong> {{ importDialog.preview?.counts?.globalVariables ?? 0 }}</p>
-              <p><strong>Settings fields:</strong> {{ importDialog.preview?.counts?.settings ?? 0 }}</p>
+              <p><strong>{{ $t('settings.import.totalSnippets') }}</strong> {{ importDialog.preview?.counts?.totalSnippets ?? 0 }}</p>
+              <p><strong>{{ $t('settings.import.folders') }}</strong> {{ importDialog.preview?.counts?.folders ?? 0 }}</p>
+              <p><strong>{{ $t('settings.import.globalVariables') }}</strong> {{ importDialog.preview?.counts?.globalVariables ?? 0 }}</p>
+              <p><strong>{{ $t('settings.import.settingsFields') }}</strong> {{ importDialog.preview?.counts?.settings ?? 0 }}</p>
             </div>
 
             <div v-if="importDialog.preview?.mergeCheck" class="import-merge-check">
-              <p><strong>Merge checks</strong></p>
+              <p><strong>{{ $t('settings.import.mergeChecks') }}</strong></p>
               <ul>
-                <li>ID conflicts: {{ importDialog.preview.mergeCheck.idConflicts }}</li>
-                <li>Global variable key conflicts: {{ importDialog.preview.mergeCheck.variableConflicts }}</li>
-                <li>Settings changes: {{ importDialog.preview.mergeCheck.settingsChanges }}</li>
+                <li>{{ $t('settings.import.idConflicts', { count: importDialog.preview.mergeCheck.idConflicts }) }}</li>
+                <li>{{ $t('settings.import.variableConflicts', { count: importDialog.preview.mergeCheck.variableConflicts }) }}</li>
+                <li>{{ $t('settings.import.settingsChanges', { count: importDialog.preview.mergeCheck.settingsChanges }) }}</li>
               </ul>
             </div>
 
             <div v-if="importDialog.preview?.validation?.warnings?.length" class="import-warning-box">
-              <p><strong>Warnings</strong></p>
+              <p><strong>{{ $t('settings.import.warnings') }}</strong></p>
               <ul>
                 <li v-for="(warning, index) in importDialog.preview.validation.warnings" :key="`warning-${index}`">{{ warning }}</li>
               </ul>
             </div>
 
             <div v-if="importDialog.preview?.validation?.errors?.length" class="import-error-box">
-              <p><strong>Import blocked</strong></p>
+              <p><strong>{{ $t('settings.import.blocked') }}</strong></p>
               <ul>
                 <li v-for="(error, index) in importDialog.preview.validation.errors" :key="`error-${index}`">{{ error }}</li>
               </ul>
@@ -195,7 +202,7 @@
           </div>
 
           <footer class="import-modal-footer">
-            <button class="btn btn-ghost" type="button" @click="closeImportDialog" :disabled="importDialog.busy">Cancel</button>
+            <button class="btn btn-ghost" type="button" @click="closeImportDialog" :disabled="importDialog.busy">{{ $t('common.cancel') }}</button>
             <button
               class="btn btn-warn"
               :class="{ 'btn-action--active': importDialog.busy && importDialog.closeMode === 'overwrite' }"
@@ -203,7 +210,7 @@
               @click="runImport('overwrite')"
               :disabled="importDialog.busy || (importDialog.preview?.validation?.errors?.length ?? 0) > 0"
             >
-              {{ importDialog.busy && importDialog.closeMode === 'overwrite' ? 'Overwriting...' : 'Overwrite' }}
+              {{ importDialog.busy && importDialog.closeMode === 'overwrite' ? $t('settings.import.overwriting') : $t('settings.import.overwrite') }}
             </button>
             <button
               class="btn btn-primary"
@@ -212,7 +219,7 @@
               @click="runImport('merge')"
               :disabled="importDialog.busy || (importDialog.preview?.validation?.errors?.length ?? 0) > 0"
             >
-              {{ importDialog.busy && importDialog.closeMode === 'merge' ? 'Merging...' : 'Merge' }}
+              {{ importDialog.busy && importDialog.closeMode === 'merge' ? $t('settings.import.merging') : $t('settings.import.merge') }}
             </button>
           </footer>
         </section>
@@ -228,6 +235,9 @@ import globalVariables from '../services/GlobalVariables.js';
 import { isAnalyticsEnabled, setConsent } from '../services/AnalyticsConsent.js';
 import Snippets from '../services/Snippets.js';
 import { useImportExport } from '../composables/useImportExport.js';
+import { t, getAvailableLocales } from '../i18n/index.js';
+
+const availableLocales = getAvailableLocales();
 
 const snippetManager = Snippets;
 
@@ -283,7 +293,7 @@ async function openImportDialog() {
       closeMode: null
     };
   } catch (error) {
-    importStatus.value = error?.message || 'Import preview failed. Please verify the file format.';
+    importStatus.value = error?.message || t('settings.import.previewFailed');
   }
 }
 
@@ -310,14 +320,14 @@ async function runImport(mode) {
     importDialog.value.busy = false;
     importDialog.value.closing = true;
     importStatus.value = mode === 'merge'
-      ? 'Import complete: merged with your existing data.'
-      : 'Import complete: existing data overwritten with imported pack.';
+      ? t('settings.import.completeMerged')
+      : t('settings.import.completeOverwritten');
     await new Promise((resolve) => setTimeout(resolve, 260));
     closeImportDialog(true);
   } catch (error) {
     importDialog.value.closeMode = null;
     importDialog.value.closing = false;
-    importStatus.value = error?.message || 'Import failed. Please verify the file format.';
+    importStatus.value = error?.message || t('settings.import.failed');
   } finally {
     importDialog.value.busy = false;
   }

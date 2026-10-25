@@ -1,66 +1,66 @@
 <template>
 	<teleport to="body">
 		<div v-if="visible" class="var-modal-overlay" @mousedown.self="emit('close')">
-			<section class="var-modal" role="dialog" aria-modal="true" aria-label="Insert variable">
+			<section class="var-modal" role="dialog" aria-modal="true" 			:aria-label="$t('varModal.ariaLabel')">
 				<header class="var-modal-header">
-					<h3>Insert Variable</h3>
-					<button class="var-modal-close" type="button" @click="emit('close')" aria-label="Close">
+								<h3>{{ $t('varModal.title') }}</h3>
+								<button class="var-modal-close" type="button" @click="emit('close')" :aria-label="$t('common.close')">
 						x
 					</button>
 				</header>
 
 				<div class="var-modal-body">
 					<label class="field">
-						<span class="field-label">Type</span>
+									<span class="field-label">{{ $t('varModal.type') }}</span>
 						<select v-model="varType" class="field-input">
 							<option v-for="option in variableTypeOptions" :key="option.value" :value="option.value">
-								{{ option.label }}
+											{{ $t(option.labelKey) }}
 							</option>
 						</select>
 					</label>
 
 					<label class="field">
-						<span class="field-label">Key</span>
+									<span class="field-label">{{ $t('varModal.key') }}</span>
 						<input
 							ref="keyInput"
 							v-model="keyName"
 							class="field-input"
 							type="text"
-							placeholder="example: env"
+										:placeholder="$t('varModal.keyPlaceholder')"
 						/>
 					</label>
 
 					<label v-if="varType === 'dropdown'" class="field">
-						<span class="field-label">Options (comma separated)</span>
+									<span class="field-label">{{ $t('varModal.options') }}</span>
 						<input
 							v-model="dropdownOptions"
 							class="field-input"
 							type="text"
-							placeholder="dev,staging,prod"
+										:placeholder="$t('varModal.optionsPlaceholder')"
 						/>
 					</label>
 
 					<label v-else class="field">
-						<span class="field-label">Default value</span>
+									<span class="field-label">{{ $t('varModal.defaultValue') }}</span>
 						<input
 							v-model="defaultValue"
 							class="field-input"
 							:class="{ 'field-input--date': varType === 'date' }"
 							:type="varType === 'date' ? 'date' : 'text'"
-							:placeholder="varType === 'date' ? 'yyyy-mm-dd' : 'my-default'"
+										:placeholder="varType === 'date' ? $t('varModal.datePlaceholder') : $t('varModal.defaultPlaceholder')"
 						/>
 					</label>
 
 					<div class="preview-wrap">
-						<span class="field-label">Preview</span>
+									<span class="field-label">{{ $t('common.preview') }}</span>
 						<code class="preview">{{ tokenPreview }}</code>
 					</div>
 				</div>
 
 				<footer class="var-modal-footer">
-					<button class="btn btn-ghost" type="button" @click="emit('close')">Cancel</button>
+								<button class="btn btn-ghost" type="button" @click="emit('close')">{{ $t('common.cancel') }}</button>
 					<button class="btn btn-primary" type="button" :disabled="!canInsert" @click="handleInsert">
-						Insert
+									{{ $t('common.insert') }}
 					</button>
 				</footer>
 			</section>

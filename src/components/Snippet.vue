@@ -6,19 +6,19 @@
         name="title"
         v-model="title"
         class="snippet-title"
-        placeholder="Untitled Snippet"
+        :placeholder="$t('snippet.untitled')"
         spellcheck="false"
         draggable="false"
       />
 
-      <label class="snippet-command" title="Type this anywhere on the web to trigger this snippet">
+      <label class="snippet-command" :title="$t('snippet.commandTitle')">
         <span class="snippet-command-slash">/</span>
         <input
           type="text"
           name="command"
           v-model="command"
           class="snippet-command-input"
-          placeholder="command"
+          :placeholder="$t('snippet.commandPlaceholder')"
           spellcheck="false"
           draggable="false"
           @input="sanitizeCommandInput"
@@ -28,8 +28,8 @@
       <button
         class="snippet-close"
         type="button"
-        aria-label="Close snippet"
-        title="Back to welcome"
+        :aria-label="$t('snippet.closeAria')"
+        :title="$t('snippet.closeTitle')"
         @click="emit('close')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -49,7 +49,7 @@
         name="content"
         v-model="content"
         class="snippet-textarea"
-        placeholder="// paste or type your snippet here..."
+        :placeholder="$t('snippet.editorPlaceholder')"
         spellcheck="false"
         draggable="false"
         @contextmenu="openEditorContextMenu"
@@ -68,10 +68,10 @@
         :style="{ top: editorCtxMenu.y + 'px', left: editorCtxMenu.x + 'px' }"
       >
         <li class="editor-ctx-item" @mousedown.prevent="openVarModal">
-          Add Variable
+          {{ $t('snippet.addVariable') }}
         </li>
         <li class="editor-ctx-item" @mousedown.prevent="openGlobalVarModal">
-          Add Global Variable
+          {{ $t('snippet.addGlobalVariable') }}
         </li>
       </ul>
     </teleport>
@@ -88,10 +88,15 @@
       @insert="insertVariableFromModal"
     />
 
-    <div class="status">
+    <!-- <div class="status">
         <span class="snippet-dot" :style="{ background: content ? 'var(--accent)' : 'var(--muted)' }"></span>
         <span class="status-text">{{ saveStatusText }}</span>
-    </div>
+    </div> -->
+
+  <SnippetFooter 
+    :content="content"
+    :lastSavedAt="lastSavedAt"
+  />
   </div>
 </template>
 
@@ -100,7 +105,9 @@
 import { ref, watch, onBeforeUnmount, onMounted, computed, nextTick } from 'vue';
 import Snippets from '../services/Snippets.js';
 import VarModal from './VarModal.vue';
+import SnippetFooter from './SnippetFooter.vue';
 import GlobalVarModal from './GlobalVarModal.vue';
+import { t } from '../i18n/index.js';
 
 const snippetManager = Snippets;
 
@@ -117,7 +124,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:title', 'update:content', 'close']);
 
-const title = ref('Untitled Snippet');
+const title = ref(t('snippet.untitled'));
 const content = ref('');
 const command = ref('');
 const isHydrating = ref(false);
@@ -143,18 +150,18 @@ function sanitizeCommandInput() {
 }
 
 const saveStatusText = computed(() => {
-  if (isHydrating.value) return 'Loading...';
-  if (isSaving.value) return 'Saving...';
-  if (hasPendingChanges.value) return 'Unsaved changes';
+  if (isHydrating.value) return t('snippet.status.loading');
+  if (isSaving.value) return t('snippet.status.saving');
+  if (hasPendingChanges.value) return t('snippet.status.unsaved');
   if (lastSavedAt.value) {
     const time = new Date(lastSavedAt.value).toLocaleTimeString([], {
       hour: 'numeric',
       minute: '2-digit',
       second: '2-digit'
     });
-    return `Last saved at ${time}`;
+    return t('footer.lastSavedAt', { time });
   }
-  return 'Not saved yet';
+  return t('footer.notSavedYet');
 });
 
 async function persistSnippet(id) {
@@ -251,7 +258,7 @@ async function fetchSnippet() {
     isHydrating.value = true;
     const snippet = await snippetManager.getSnippetData(props.id);
     currentSnippetId.value = props.id;
-    title.value = snippet?.name || 'Untitled Snippet';
+    title.value = snippet?.name || t('snippet.untitled');
     content.value = snippet?.content || '';
     command.value = snippet?.command || '';
   lastSavedAt.value = snippet?.updatedAt || null;
@@ -306,6 +313,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 43px;
+  box-sizing: border-box;
   padding: 9px 12px;
   background: var(--bg-elev-2);
   border-bottom: 1px solid var(--border);

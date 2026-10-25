@@ -2,6 +2,7 @@ import snippetsService from './Snippets.js';
 import globalVariables from './GlobalVariables.js';
 import settings from './Settings.js';
 import { APP_VERSION } from '../version.js';
+import { t } from '../i18n/index.js';
 
 const SCHEMA_VERSION = '1.1.0';
 const SUPPORTED_SCHEMA_MAJOR = 1;
@@ -127,7 +128,7 @@ function validateImportData(data) {
 
     const idKey = String(item.id ?? '');
     if (!idKey) {
-      warnings.push('Some imported items were missing IDs and will be regenerated.');
+      warnings.push(t('pack.missingIds'));
     } else if (ids.has(idKey)) {
       duplicateIds += 1;
     } else {
@@ -135,7 +136,7 @@ function validateImportData(data) {
     }
 
     if (!String(item.name || '').trim()) {
-      warnings.push('Some imported items were missing names and were normalized.');
+      warnings.push(t('pack.missingNames'));
     }
 
     if (item.type === 'folder' && Array.isArray(item.children) && item.children.length) {
@@ -144,7 +145,7 @@ function validateImportData(data) {
   }
 
   if (duplicateIds > 0) {
-    warnings.push(`${duplicateIds} duplicate IDs detected in the import file.`);
+    warnings.push(t('pack.duplicateIds', { count: duplicateIds }));
   }
 
   const totalSnippets = data.snippets.length + countFolderStats(data.folders).snippetsCount;
@@ -152,7 +153,7 @@ function validateImportData(data) {
   const totalVars = Object.keys(data.globalVariables).length;
 
   if (totalSnippets === 0 && totalFolders === 0 && totalVars === 0) {
-    errors.push('Import file does not contain snippets, folders, or global variables.');
+    errors.push(t('pack.empty'));
   }
 
   return {
@@ -166,11 +167,11 @@ function parsePack(jsonString) {
   try {
     parsed = JSON.parse(jsonString);
   } catch {
-    throw new Error('Invalid JSON file.');
+    throw new Error(t('pack.invalidJson'));
   }
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Import file must be a JSON object.');
+    throw new Error(t('pack.notObject'));
   }
 
   if (!parsed.schemaVersion && (Array.isArray(parsed.snippets) || Array.isArray(parsed.folders))) {
@@ -189,17 +190,17 @@ function parsePack(jsonString) {
 
   const schemaVersion = asString(parsed.schemaVersion);
   if (!schemaVersion) {
-    throw new Error('Import file is missing schemaVersion.');
+    throw new Error(t('pack.missingSchema'));
   }
 
   const major = majorFromSemver(schemaVersion);
   if (major !== SUPPORTED_SCHEMA_MAJOR) {
-    throw new Error(`Unsupported schema version: ${schemaVersion}`);
+    throw new Error(t('pack.unsupportedSchema', { version: schemaVersion }));
   }
 
   const data = asObject(parsed.data);
   if (!Object.keys(data).length) {
-    throw new Error('Import file is missing data payload.');
+    throw new Error(t('pack.missingData'));
   }
 
   return {

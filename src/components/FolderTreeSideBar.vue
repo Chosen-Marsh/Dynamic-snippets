@@ -1,5 +1,6 @@
 <script setup>
 import Snippets from '../services/Snippets.js';
+import { t } from '../i18n/index.js';
 import Footer from './Footer.vue';
 import SettingsModal from './SettingsModal.vue';
 import { useContextMenu } from '../composables/useContextMenu.js';
@@ -147,12 +148,12 @@ async function createFolder(name, parentId = null) {
 
 async function createFolderFromMenu(parentId = null) {
     closeContextMenu();
-    await createFolder('New Folder', parentId);
+    await createFolder(t('sidebar.defaultFolderName'), parentId);
 }
 
 async function createSnippet(folderId) {
     closeContextMenu();
-    await snippetManager.createSnippet({ name: 'Untitled Snippet', content: '' }, folderId).catch(console.error);
+    await snippetManager.createSnippet({ name: t('sidebar.defaultSnippetName'), content: '' }, folderId).catch(console.error);
     await loadFolders();
     emit('snippet-created');
 }
@@ -222,7 +223,7 @@ defineExpose({ loadFolders });
 <template>
   <aside class="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-header-label">Snippets</span>
+      <span class="sidebar-header-label">{{ $t('sidebar.title') }}</span>
     </div>
 
     <div
@@ -315,7 +316,7 @@ defineExpose({ loadFolders });
             <path d="M9.5 1v4h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M8 8v4M6 10h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
           </svg>
-          New Snippet
+          {{ $t('sidebar.menu.newSnippet') }}
         </li>
         <li
           v-if="!ctxMenu.item || ctxMenu.item.type === 'folder'"
@@ -326,7 +327,7 @@ defineExpose({ loadFolders });
             <path d="M2 5.5A1.5 1.5 0 013.5 4h2.879a1.5 1.5 0 011.06.44l.622.621A1.5 1.5 0 009.12 5.5H12.5A1.5 1.5 0 0114 7v4.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12V5.5z" fill="currentColor"/>
             <path d="M8 7.5v3M6.5 9h3" stroke="var(--bg-elev-2)" stroke-width="1.2" stroke-linecap="round"/>
           </svg>
-          New Folder
+          {{ $t('sidebar.menu.newFolder') }}
         </li>
         <template v-if="ctxMenu.item?.type === 'folder'">
           <li class="ctx-divider" />
@@ -334,13 +335,13 @@ defineExpose({ loadFolders });
             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.5 2.5a1.414 1.414 0 012 2L5 13H3v-2L11.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
             </svg>
-            Rename
+            {{ $t('sidebar.menu.rename') }}
           </li>
           <li class="ctx-item ctx-item--danger" @mousedown.prevent="deleteFolder(ctxMenu.item)">
             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 4h10M6 4V2h4v2M5 4v8a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Delete
+            {{ $t('sidebar.menu.delete') }}
           </li>
         </template>
         <template v-if="ctxMenu.item?.type === 'snippet'">
@@ -348,13 +349,13 @@ defineExpose({ loadFolders });
             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.5 2.5a1.414 1.414 0 012 2L5 13H3v-2L11.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
             </svg>
-            Rename
+            {{ $t('sidebar.menu.rename') }}
           </li>
           <li class="ctx-item ctx-item--danger" @mousedown.prevent="deleteSnippet(ctxMenu.item)">
             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 4h10M6 4V2h4v2M5 4v8a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Delete Snippet
+            {{ $t('sidebar.menu.deleteSnippet') }}
           </li>
         </template>
       </ul>
@@ -384,8 +385,12 @@ defineExpose({ loadFolders });
 .sidebar-header {
   display: flex;
   align-items: center;
+  height: 43px;
+  box-sizing: border-box;
   padding: 9px 12px;
+  background: var(--bg-elev-2);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .sidebar-header-label {

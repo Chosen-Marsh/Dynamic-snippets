@@ -1,48 +1,47 @@
 <template>
-	<section class="welcome" aria-label="Welcome">
+	<section class="welcome" :aria-label="$t('welcome.ariaLabel')">
 		<div class="ambient ambient-a" />
 		<div class="ambient ambient-b" />
 
 		<header class="hero">
-			<p class="eyebrow">Dynamic Snippets</p>
-			<h1>Build smart snippets in seconds</h1>
+			<p class="eyebrow">{{ $t('app.name') }}</p>
+			<h1>{{ $t('welcome.heading') }}</h1>
 			<p class="lead">
-				Select a snippet on the left or create one from the sidebar menu. Use variables to
-				fill values quickly at insert time.
+				{{ $t('welcome.lead') }}
 			</p>
 		</header>
 
 		<div class="guide-grid">
 			<article class="guide-card">
-				<h2>Dropdown Variable</h2>
-				<p>Choose from predefined values at paste time.</p>
+				<h2>{{ $t('welcome.dropdown.title') }}</h2>
+				<p>{{ $t('welcome.dropdown.text') }}</p>
 				<code v-pre>${{environment-dropdown|dev,staging,production}</code>
 			</article>
 
 			<article class="guide-card">
-				<h2>Text Input Variable</h2>
-				<p>Prompt for custom values before inserting.</p>
+				<h2>{{ $t('welcome.text.title') }}</h2>
+				<p>{{ $t('welcome.text.text') }}</p>
 				<code v-pre>${ticket-text|ABC-123}</code>
 			</article>
 
 			<article class="guide-card">
-				<h2>Date Variable</h2>
-				<p>Pick a date and insert it using your local date format.</p>
+				<h2>{{ $t('welcome.date.title') }}</h2>
+				<p>{{ $t('welcome.date.text') }}</p>
 				<code v-pre>${dueDate-date|25-07-2025}</code>
 			</article>
 
 			<article class="guide-card">
-				<h2>Global Variable</h2>
-				<p>Uses a value from Settings. Missing keys paste as <code>undefined</code>.</p>
+				<h2>{{ $t('welcome.global.title') }}</h2>
+				<p>{{ $t('welcome.global.text') }} <code>undefined</code>.</p>
 				<code v-pre>${username-global}</code>
 			</article>
 		</div>
 
 		<footer class="tips">
-			<span class="tip">Tip: Right-click in the editor to add variables quickly.</span>
-			<span class="tip">Tip: Use folders to group snippets by project or workflow.</span>
-			<span class="tip">Tip: Date variables insert in your browser's local format.</span>
-			<button class="history-btn" type="button" @click="emit('view-history')">View version history</button>
+			<span class="tip">{{ $t('welcome.tip1') }}</span>
+			<span class="tip">{{ $t('welcome.tip2') }}</span>
+			<span class="tip">{{ $t('welcome.tip3') }}</span>
+			<button class="history-btn" type="button" @click="emit('view-history')">{{ $t('welcome.viewHistory') }}</button>
 		</footer>
 	</section>
 </template>

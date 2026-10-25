@@ -14,6 +14,8 @@ import { hasConsentBeenSetAnywhere, setConsent } from '../services/AnalyticsCons
 import { ANALYTICS_ENABLED, track } from '../services/Analytics.js';
 import { ensureInstalledAt, shouldShowRatePrompt, markRatePromptAccepted, markRatePromptDismissed, RATE_URL } from '../services/InstallTracking.js';
 import { ref, computed, onMounted } from 'vue';
+import { t, setLocale, getSection } from '../i18n/index.js';
+import storage from '../services/Storage.js';
 
 const sidebarRef = ref(null);
 const snippetID = ref(null);
@@ -38,7 +40,7 @@ async function restoreLastOpenedSnippet() {
       snippetID.value = null;
       return;
     }
-    snippetTitle.value = snippet.name || 'Untitled Snippet';
+    snippetTitle.value = snippet.name || t('snippet.untitled');
   } catch (err) {
     console.error('Failed to restore last opened snippet:', err);
   } finally {
@@ -48,6 +50,14 @@ async function restoreLastOpenedSnippet() {
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
+}
+
+function applyLanguage(language) {
+  setLocale(language);
+  // The content script can't import the i18n module, so it reads its strings from storage.
+  storage.setLocal({ contentMessages: getSection('content') }).catch((err) => {
+    console.error('Failed to sync content messages:', err);
+  });
 }
 
 async function maybeShowRatePrompt() {
@@ -61,6 +71,7 @@ onMounted(async () => {
   const s = await settings.get();
   currentSettings.value = s;
   applyTheme(s.theme);
+  applyLanguage(s.language);
 
   if (!ANALYTICS_ENABLED) {
     showConsentModal.value = false;
@@ -107,6 +118,7 @@ function onConsentDecline() {
 function onSettingsSaved(s) {
   currentSettings.value = s;
   applyTheme(s.theme);
+  applyLanguage(s.language);
   track('settings_saved');
 }
 
@@ -148,7 +160,7 @@ const liveSnippet = computed(() => {
 
 function onFileSelect(file) {
   snippetID.value = file.id;
-  snippetTitle.value = file.name || 'Untitled Snippet';
+  snippetTitle.value = file.name || t('snippet.untitled');
   track('snippet_opened');
   Snippets.setLastOpenedSnippetId(file.id).catch(err => {
     console.error('Failed to set last opened snippet ID:', err);
