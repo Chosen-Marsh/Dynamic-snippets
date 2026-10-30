@@ -51,7 +51,7 @@
           class="change-item"
         >
           <span class="change-type" :class="`change-type--${item.type}`">{{ $t(`changelog.types.${item.type}`) }}</span>
-          <span>{{ item.text }}</span>
+          <div class="change-description" v-html="item.text"></div>
         </li>
         <li v-if="normalizeNotes(selectedHistoryEntry.comingSoon).length" class="coming-row">
           <section class="coming-soon">
@@ -62,7 +62,7 @@
                 :key="`history-coming-${index}`"
                 class="coming-item"
               >
-                {{ note }}
+                <div v-html="note"></div>
               </li>
             </ul>
           </section>
@@ -73,14 +73,14 @@
     <ul v-else class="changelog-list">
       <li v-for="(item, index) in normalizeChanges(changelog?.changes || [])" :key="index" class="change-item">
         <span class="change-type" :class="`change-type--${item.type}`">{{ $t(`changelog.types.${item.type}`) }}</span>
-        <span>{{ item.text }}</span>
+        <div class="change-description" v-html="item.text"></div>
       </li>
       <li v-if="normalizeNotes(changelog?.comingSoon).length" class="coming-row">
         <section class="coming-soon">
           <h3>{{ $t('changelog.comingSoon') }}</h3>
           <ul class="coming-list">
             <li v-for="(note, index) in normalizeNotes(changelog?.comingSoon)" :key="`coming-${index}`" class="coming-item">
-              {{ note }}
+              <div v-html="note"></div>
             </li>
           </ul>
         </section>

@@ -1,8 +1,10 @@
+import v1_3_1 from './v1_3_1.js';
 import v1_3_0 from './v1_3_0.js';
 import v1_2_0 from './v1_2_0.js';
 import v1_1_0 from './v1_1_0.js';
 
 const CHANGELOGS = {
+  '1.3.1': v1_3_1,
   '1.3.0': v1_3_0,
   '1.2.0': v1_2_0,
   '1.1.0': v1_1_0
