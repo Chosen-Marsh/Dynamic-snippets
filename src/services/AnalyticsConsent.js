@@ -1,3 +1,5 @@
+import { clearAnalyticsQueue } from './Analytics.js';
+
 const CONSENT_KEY = 'ds_analytics_consent';
 
 function canUseLocalStorage() {
@@ -47,6 +49,7 @@ export async function hasConsentBeenSetAnywhere() {
 
 export function setConsent(granted) {
   const value = granted ? 'granted' : 'denied';
+  if (!granted) clearAnalyticsQueue();
 
   if (canUseLocalStorage()) {
     try {

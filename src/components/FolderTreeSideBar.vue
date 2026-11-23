@@ -2,7 +2,6 @@
 import Snippets from '../services/Snippets.js';
 import { t } from '../i18n/index.js';
 import Footer from './Footer.vue';
-import SettingsModal from './SettingsModal.vue';
 import { useContextMenu } from '../composables/useContextMenu.js';
 import { useDragAndDrop } from '../composables/useDragAndDrop.js';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
@@ -17,28 +16,20 @@ const props = defineProps({
   liveSnippet: {
     type: Object,
     default: null
+  },
+  settingsOpen: {
+    type: Boolean,
+    default: false
   }
 });
 
 const emit = defineEmits([
   'select',
   'delete',
-  'settings-saved',
-  'settings-opened',
+  'toggle-settings',
   'snippet-created',
-  'folder-created',
-  'import-completed',
-  'export-completed'
+  'folder-created'
 ]);
-
-const showSettings = ref(false);
-function openSettings() {
-  showSettings.value = true;
-  emit('settings-opened');
-}
-function onSettingsSaved(s) {
-  emit('settings-saved', s);
-}
 
 const folders = ref([]);
 const rootSnippets = ref([]);
@@ -59,15 +50,6 @@ const {
   onDragStart, onDragOver, onDragLeave, onDrop,
   onRootDragOver, onRootDragLeave, onRootDrop, onDragEnd
 } = useDragAndDrop(snippetManager, loadFolders);
-
-async function onImportCompleted() {
-  await loadFolders();
-  emit('import-completed');
-}
-
-function onExportCompleted() {
-  emit('export-completed');
-}
 
 // ── Tree ──
 function toggleFolder(item) {
@@ -360,14 +342,7 @@ defineExpose({ loadFolders });
         </template>
       </ul>
     </teleport>
-    <Footer @open-settings="openSettings" />
-    <SettingsModal
-      :visible="showSettings"
-      @close="showSettings = false"
-      @saved="onSettingsSaved"
-      @import-completed="onImportCompleted"
-      @export-completed="onExportCompleted"
-    />
+    <Footer :settings-open="settingsOpen" @open-settings="emit('toggle-settings')" />
   </aside>
 </template>
 
@@ -409,22 +384,9 @@ defineExpose({ loadFolders });
 }
 
 .sidebar-body--drag-over {
-  background: rgba(34, 197, 94, 0.06);
+  background: var(--accent-soft);
   outline: 1px dashed var(--accent);
   outline-offset: -2px;
-}
-
-.sidebar-body::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-body::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 99px;
 }
 
 .tree-row {
@@ -453,18 +415,18 @@ defineExpose({ loadFolders });
 }
 
 .tree-row--active {
-  background: rgba(34, 197, 94, 0.12);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
 .tree-row--active:hover {
-  background: rgba(34, 197, 94, 0.16);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--accent);
 }
 
 .tree-row--drag-over {
-  background: rgba(34, 197, 94, 0.12);
-  outline: 1px solid rgba(34, 197, 94, 0.4);
+  background: var(--accent-soft);
+  outline: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   outline-offset: -1px;
 }
 
@@ -489,8 +451,8 @@ defineExpose({ loadFolders });
 }
 
 .tree-row--drop-inside {
-  background: rgba(34, 197, 94, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.25);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .tree-row--dragging {
@@ -581,7 +543,7 @@ defineExpose({ loadFolders });
   list-style: none;
   margin: 0;
   min-width: 130px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow);
 }
 
 .ctx-item {

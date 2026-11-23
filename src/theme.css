@@ -1,41 +1,124 @@
+/*
+ * Dynamic Snippets design tokens.
+ * Components read these variables; change a value here and every surface follows.
+ * Dark is the default; light overrides the same names under [data-theme="light"].
+ */
+
 :root {
-  --bg: #0b1220;
-  --bg-elev: #121a2b;
-  --bg-elev-2: #172033;
-  --text: #e5e7eb;
-  --muted: #9ca3af;
+  color-scheme: dark;
+
+  /* Surfaces, from the page backdrop up to raised controls */
+  --bg: #0b1120;
+  --bg-elev: #111a2b;
+  --bg-elev-2: #172236;
+  --bg-hover: #1e2a41;
+  --bg-input: #0e1626;
+
+  /* Lines */
+  --border: #243049;
+  --border-strong: #33415e;
+
+  /* Text */
+  --text: #e6eaf2;
+  --muted: #94a0b6;
+  --subtle: #66738b;
+
+  /* Brand */
   --accent: #22c55e;
   --accent-strong: #16a34a;
-  --danger: #ef4444;
+  --accent-soft: rgba(34, 197, 94, 0.14);
+  --accent-contrast: #f0fdf4;
+
+  /* Status */
+  --danger: #f05252;
   --danger-strong: #dc2626;
-  --secondary: #334155;
-  --secondary-strong: #1e293b;
-  --border: #25314a;
-  --shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  --danger-soft: rgba(240, 82, 82, 0.14);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.14);
+  --info: #38bdf8;
+
+  /* Neutral buttons */
+  --secondary: #2a3650;
+  --secondary-strong: #1f2a40;
+
+  /* Code */
+  --code-bg: #0e1626;
+  --code-text: #d7e0ee;
+  --code-border: #243049;
+
+  /* Shape and depth */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+  --focus-ring: 0 0 0 3px rgba(34, 197, 94, 0.28);
+
+  /* Page backgrounds used by the right-hand panes */
+  --app-bg: radial-gradient(130% 90% at 20% 0%, #172238 0%, var(--bg) 55%, #070b14 100%);
+  --welcome-bg: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 100%);
+
+  --scrollbar-thumb: #2f3c57;
+  --scrollbar-thumb-hover: #3e4d6d;
 }
 
 [data-theme="light"] {
-  --bg: #f5f7fb;
+  color-scheme: light;
+
+  --bg: #f3f5f9;
   --bg-elev: #ffffff;
-  --bg-elev-2: #eef2f7;
+  --bg-elev-2: #f5f7fb;
+  --bg-hover: #edf1f7;
+  --bg-input: #ffffff;
+
+  --border: #dde3ec;
+  --border-strong: #c3ccd9;
+
   --text: #0f172a;
-  --muted: #475569;
-  --accent: #15803d;
-  --accent-strong: #166534;
+  --muted: #526075;
+  --subtle: #8692a6;
+
+  --accent: #16a34a;
+  --accent-strong: #15803d;
+  --accent-soft: rgba(22, 163, 74, 0.1);
+  --accent-contrast: #ffffff;
+
   --danger: #dc2626;
   --danger-strong: #b91c1c;
-  --secondary: #64748b;
-  --secondary-strong: #cbd5e1;
-  --border: #cbd5e1;
-  --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  --danger-soft: rgba(220, 38, 38, 0.08);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.1);
+  --info: #0284c7;
+
+  --secondary: #ffffff;
+  --secondary-strong: #f1f4f9;
+
+  --code-bg: #f5f7fb;
+  --code-text: #0f172a;
+  --code-border: #dde3ec;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  --focus-ring: 0 0 0 3px rgba(22, 163, 74, 0.22);
+
+  --app-bg: var(--bg);
+  --welcome-bg: var(--bg-elev);
+
+  --scrollbar-thumb: #c9d1dd;
+  --scrollbar-thumb-hover: #aab5c5;
+
+  /* Legacy names some components still read */
   --surface-strong: #f8fafc;
   --surface-muted: #e2e8f0;
-  --code-bg: #f8fafc;
-  --code-text: #0f172a;
-  --code-border: #cbd5e1;
+  --ambient-opacity: 0.15;
+  --tip-bg: rgba(22, 163, 74, 0.08);
+  --tip-border: rgba(22, 163, 74, 0.2);
 }
 
-* {
+/* ── Base ──────────────────────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -43,20 +126,14 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(130% 90% at 20% 0%, #1a2438 0%, var(--bg) 55%, #070b14 100%);
+  background: var(--app-bg);
   color: var(--text);
   font-family: "Segoe UI", "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
-}
-
-[data-theme="light"],
-[data-theme="light"] body {
-  background: #f1f5f9;
-  color: var(--text);
-  --welcome-bg: var(--bg-elev);
-  --ambient-opacity: 0.15;
-  --tip-bg: rgba(22, 163, 74, 0.08);
-  --tip-border: rgba(22, 163, 74, 0.2);
 }
 
 #app {
@@ -64,41 +141,101 @@ body {
   overflow: hidden;
 }
 
-#app :not(button):not(.btn):not(.btn *) {
-  border-radius: 0 !important;
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text);
 }
 
+/* Form controls inherit the app font and pick up native theming from color-scheme.
+   :where() keeps specificity at zero so component styles always win. */
+:where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+:where(input, select, textarea) {
+  accent-color: var(--accent);
+}
+
+:where(select) option {
+  background: var(--bg-elev);
+  color: var(--text);
+}
+
+:where(input, textarea)::placeholder {
+  color: var(--subtle);
+  opacity: 1;
+}
+
+:where(input[type="number"])::-webkit-inner-spin-button {
+  opacity: 0.5;
+}
+
+/* One keyboard focus style everywhere, unless a component draws its own. */
+:where(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Scrollbars ────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* ── Code ──────────────────────────────────────────── */
 code,
 pre {
-  font-family: "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
+  font-family: "Cascadia Code", "Fira Code", "Consolas", "SFMono-Regular", monospace;
 }
 
 code {
-  color: var(--code-text, var(--text));
-  background: var(--code-bg, var(--bg-elev-2));
-  border: 1px solid var(--code-border, var(--border));
-  border-radius: 6px;
+  color: var(--code-text);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm);
   padding: 0.12rem 0.35rem;
 }
 
 pre {
-  color: var(--code-text, var(--text));
-  background: var(--code-bg, var(--bg-elev-2));
-  border: 1px solid var(--code-border, var(--border));
-  border-radius: 8px;
+  color: var(--code-text);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-md);
   padding: 0.7rem 0.8rem;
   overflow-x: auto;
 }
 
+/* ── Shared utility classes ────────────────────────── */
 .popup {
   margin: 0;
   padding: 16px;
 }
 
 .card {
-  background: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg-elev-2) 100%);
+  background: var(--bg-elev);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 14px;
   box-shadow: var(--shadow);
 }
@@ -119,4 +256,12 @@ pre {
 
 .accent {
   color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
 }

@@ -5,13 +5,16 @@ import Welcome from '../components/Welcome.vue';
 import ChangelogPanel from '../components/ChangelogPanel.vue';
 import AnalyticsConsentModal from '../components/AnalyticsConsentModal.vue';
 import RatePromptModal from '../components/RatePromptModal.vue';
+import SettingsPanel from '../components/SettingsPanel.vue';
+import Onboarding from '../components/Onboarding.vue';
+import onboardingState from '../services/OnboardingState.js';
 import settings from '../services/Settings.js';
 import Snippets from '../services/Snippets.js';
 import changelogState from '../services/ChangeLogState.js';
 import { APP_VERSION } from '../version.js';
 import { getAllChangelogs, getChangelogByVersion } from '../changelogs/index.js';
 import { hasConsentBeenSetAnywhere, setConsent } from '../services/AnalyticsConsent.js';
-import { ANALYTICS_ENABLED, track } from '../services/Analytics.js';
+import { ANALYTICS_ENABLED, track, flushAnalytics } from '../services/Analytics.js';
 import { ensureInstalledAt, shouldShowRatePrompt, markRatePromptAccepted, markRatePromptDismissed, RATE_URL } from '../services/InstallTracking.js';
 import { ref, computed, onMounted } from 'vue';
 import { t, setLocale, getSection } from '../i18n/index.js';
@@ -28,6 +31,11 @@ const currentChangelog = ref(null);
 const showChangelog = ref(false);
 const showVersionHistory = ref(false);
 const allChangelogs = ref([]);
+const showSettings = ref(false);
+const onboardingPending = ref(false);
+const onboardingIsFirstRun = ref(false);
+// Consent comes first if it is needed; the tour waits behind it.
+const showOnboarding = computed(() => onboardingPending.value && !showConsentModal.value);
 
 async function restoreLastOpenedSnippet() {
   isRestoringSnippet.value = true;
@@ -61,7 +69,7 @@ function applyLanguage(language) {
 }
 
 async function maybeShowRatePrompt() {
-  if (showConsentModal.value || showChangelog.value || showRatePrompt.value) return;
+  if (showConsentModal.value || onboardingPending.value || showChangelog.value || showRatePrompt.value) return;
   showRatePrompt.value = await shouldShowRatePrompt();
 }
 
@@ -82,9 +90,17 @@ onMounted(async () => {
 
   const availableChangelog = getChangelogByVersion(APP_VERSION);
   allChangelogs.value = getAllChangelogs();
-  if (availableChangelog) {
+  const [seenVersion, onboardingDone] = await Promise.all([
+    changelogState.getSeenVersion(),
+    onboardingState.isCompleted()
+  ]);
+
+  // No changelog has ever been dismissed, so this is a brand-new user: show the tour, not release notes.
+  if (!onboardingDone && seenVersion === null) {
+    onboardingPending.value = true;
+    onboardingIsFirstRun.value = true;
+  } else if (availableChangelog) {
     currentChangelog.value = availableChangelog;
-    const seenVersion = await changelogState.getSeenVersion();
     showChangelog.value = seenVersion !== APP_VERSION;
   }
 
@@ -97,8 +113,10 @@ onMounted(async () => {
   await maybeShowRatePrompt();
 
   if (!showConsentModal.value) {
-    track('popup_opened');
+    // Await the enqueue so this open is included in the upload below.
+    await track('popup_opened');
   }
+  flushAnalytics();
 });
 
 function onConsentAccept() {
@@ -115,6 +133,47 @@ function onConsentDecline() {
   maybeShowRatePrompt();
 }
 
+async function onOnboardingSettings(partial) {
+  const saved = await settings.save(partial);
+  currentSettings.value = saved;
+  applyTheme(saved.theme);
+  applyLanguage(saved.language);
+}
+
+async function onOnboardingFinish({ action, step }) {
+  onboardingPending.value = false;
+  await onboardingState.markCompleted();
+  if (onboardingIsFirstRun.value) {
+    onboardingIsFirstRun.value = false;
+    await changelogState.setSeenVersion(APP_VERSION);
+  }
+  track('onboarding_finished', { action, step });
+  if (action === 'create') {
+    await onWelcomeCreateSnippet();
+  }
+  await maybeShowRatePrompt();
+}
+
+function replayOnboarding() {
+  showSettings.value = false;
+  onboardingPending.value = true;
+  track('onboarding_replayed');
+}
+
+function toggleSettings() {
+  showSettings.value = !showSettings.value;
+  if (showSettings.value) track('settings_opened');
+}
+
+function closeSettings() {
+  showSettings.value = false;
+}
+
+async function onImportCompleted() {
+  await sidebarRef.value?.loadFolders();
+  track('snippets_imported');
+}
+
 function onSettingsSaved(s) {
   currentSettings.value = s;
   applyTheme(s.theme);
@@ -122,8 +181,8 @@ function onSettingsSaved(s) {
   track('settings_saved');
 }
 
-function onAnalyticsEvent(action) {
-  track(action);
+function onAnalyticsEvent(action, props) {
+  track(action, props);
 }
 
 async function onRateAccept() {
@@ -159,12 +218,24 @@ const liveSnippet = computed(() => {
 });
 
 function onFileSelect(file) {
+  showSettings.value = false;
   snippetID.value = file.id;
   snippetTitle.value = file.name || t('snippet.untitled');
   track('snippet_opened');
   Snippets.setLastOpenedSnippetId(file.id).catch(err => {
     console.error('Failed to set last opened snippet ID:', err);
   });
+}
+
+async function onWelcomeCreateSnippet() {
+  try {
+    const snippet = await Snippets.createSnippet({ name: t('sidebar.defaultSnippetName'), content: '' });
+    await sidebarRef.value?.loadFolders();
+    onFileSelect(snippet);
+    track('snippet_created', { source: 'welcome' });
+  } catch (err) {
+    console.error('Failed to create snippet from welcome page:', err);
+  }
 }
 
 function onSnippetTitleUpdate(value) {
@@ -216,6 +287,12 @@ function closeVersionHistory() {
       @accept="onConsentAccept"
       @decline="onConsentDecline"
     />
+    <Onboarding
+      :visible="showOnboarding"
+      :settings="currentSettings"
+      @update-settings="onOnboardingSettings"
+      @finish="onOnboardingFinish"
+    />
     <RatePromptModal
       :visible="showRatePrompt"
       @accept="onRateAccept"
@@ -225,17 +302,22 @@ function closeVersionHistory() {
     <FolderTreeSideBar
       ref="sidebarRef"
       :live-snippet="liveSnippet"
+      :settings-open="showSettings"
       @select="onFileSelect"
       @delete="onSnippetDelete"
-      @settings-saved="onSettingsSaved"
-      @settings-opened="() => onAnalyticsEvent('settings_opened')"
-      @snippet-created="() => onAnalyticsEvent('snippet_created')"
+      @toggle-settings="toggleSettings"
+      @snippet-created="() => onAnalyticsEvent('snippet_created', { source: 'sidebar' })"
       @folder-created="() => onAnalyticsEvent('folder_created')"
-      @import-completed="() => onAnalyticsEvent('snippets_imported')"
+    />
+    <SettingsPanel
+      v-if="showSettings"
+      @close="closeSettings"
+      @saved="onSettingsSaved"
+      @import-completed="onImportCompleted"
       @export-completed="() => onAnalyticsEvent('snippets_exported')"
     />
     <ChangelogPanel
-      v-if="!snippetID && !isRestoringSnippet && (showChangelog || showVersionHistory)"
+      v-else-if="!snippetID && !isRestoringSnippet && (showChangelog || showVersionHistory)"
       :changelog="currentChangelog"
       :history="allChangelogs"
       :history-mode="showVersionHistory && !showChangelog"
@@ -244,10 +326,13 @@ function closeVersionHistory() {
     />
     <Welcome
       v-else-if="!snippetID && !isRestoringSnippet"
+      @create-snippet="onWelcomeCreateSnippet"
+      @start-tour="replayOnboarding"
       @view-history="openVersionHistory"
     />
     <Snippet
       v-if="snippetID"
+      v-show="!showSettings"
       :id="snippetID"
       :debounce-ms="currentSettings.debounceMs"
       class="snippet-pane"

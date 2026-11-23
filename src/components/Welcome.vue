@@ -1,118 +1,104 @@
 <template>
 	<section class="welcome" :aria-label="$t('welcome.ariaLabel')">
-		<div class="ambient ambient-a" />
-		<div class="ambient ambient-b" />
-
 		<header class="hero">
 			<p class="eyebrow">{{ $t('app.name') }}</p>
 			<h1>{{ $t('welcome.heading') }}</h1>
-			<p class="lead">
-				{{ $t('welcome.lead') }}
-			</p>
+			<p class="lead">{{ $t('welcome.lead') }}</p>
+			<div class="hero-actions">
+				<Button variant="primary" icon="file" @click="emit('create-snippet')">
+					{{ $t('welcome.newSnippet') }}
+				</Button>
+				<Button variant="secondary" @click="emit('start-tour')">
+					{{ $t('welcome.tour') }}
+				</Button>
+			</div>
 		</header>
 
-		<div class="guide-grid">
-			<article class="guide-card">
-				<h2>{{ $t('welcome.dropdown.title') }}</h2>
-				<p>{{ $t('welcome.dropdown.text') }}</p>
-				<code v-pre>${{environment-dropdown|dev,staging,production}</code>
-			</article>
+		<section class="block" aria-labelledby="welcome-insert-title">
+			<h2 id="welcome-insert-title" class="block-title">{{ $t('welcome.insertTitle') }}</h2>
+			<div class="methods">
+				<article class="method">
+					<span class="method-icon" aria-hidden="true">
+						<svg viewBox="0 0 16 16" fill="none">
+							<path d="M4 2.5v9l2.6-2.4 1.8 4.1 1.6-.7-1.8-4h3.5L4 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+						</svg>
+					</span>
+					<div>
+						<h3>{{ $t('welcome.contextMenu.title') }}</h3>
+						<p>{{ $t('welcome.contextMenu.text', { menu: $t('background.insertSnippetMenu') }) }}</p>
+					</div>
+				</article>
+				<article class="method">
+					<span class="method-icon method-icon--slash" aria-hidden="true">/</span>
+					<div>
+						<h3>{{ $t('welcome.slash.title') }}</h3>
+						<p>{{ $t('welcome.slash.text') }}</p>
+					</div>
+				</article>
+			</div>
+		</section>
 
-			<article class="guide-card">
-				<h2>{{ $t('welcome.text.title') }}</h2>
-				<p>{{ $t('welcome.text.text') }}</p>
-				<code v-pre>${ticket-text|ABC-123}</code>
-			</article>
+		<section class="block" aria-labelledby="welcome-vars-title">
+			<div class="block-head">
+				<h2 id="welcome-vars-title" class="block-title">{{ $t('welcome.variablesTitle') }}</h2>
+				<span class="block-hint">{{ $t('welcome.variablesHint') }}</span>
+			</div>
+			<ul class="vars">
+				<li v-for="variable in VARIABLES" :key="variable.id" class="var">
+					<div class="var-label">
+						<span class="var-name">{{ $t(`welcome.${variable.id}.title`) }}</span>
+						<span class="var-desc">{{ $t(`welcome.${variable.id}.text`) }}</span>
+					</div>
+					<code class="var-token">{{ variable.token }}</code>
+				</li>
+			</ul>
+		</section>
 
-			<article class="guide-card">
-				<h2>{{ $t('welcome.date.title') }}</h2>
-				<p>{{ $t('welcome.date.text') }}</p>
-				<code v-pre>${dueDate-date|25-07-2025}</code>
-			</article>
-
-			<article class="guide-card">
-				<h2>{{ $t('welcome.global.title') }}</h2>
-				<p>{{ $t('welcome.global.text') }} <code>undefined</code>.</p>
-				<code v-pre>${username-global}</code>
-			</article>
-		</div>
-
-		<footer class="tips">
-			<span class="tip">{{ $t('welcome.tip1') }}</span>
-			<span class="tip">{{ $t('welcome.tip2') }}</span>
-			<span class="tip">{{ $t('welcome.tip3') }}</span>
-			<button class="history-btn" type="button" @click="emit('view-history')">{{ $t('welcome.viewHistory') }}</button>
+		<footer class="foot">
+			<span class="version">{{ $t('changelog.version', { version: APP_VERSION }) }}</span>
+			<button class="history-btn" type="button" @click="emit('view-history')">
+				{{ $t('welcome.viewHistory') }}
+				<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+					<path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</button>
 		</footer>
 	</section>
 </template>
 
 <script setup>
-const emit = defineEmits(['view-history']);
+import Button from './Button.vue';
+import { APP_VERSION } from '../version.js';
+
+const emit = defineEmits(['create-snippet', 'start-tour', 'view-history']);
+
+const VARIABLES = [
+	{ id: 'dropdown', token: '${{env-dropdown|dev,staging,prod}' },
+	{ id: 'text', token: '${ticket-text|ABC-123}' },
+	{ id: 'date', token: '${due-date|2025-07-25}' },
+	{ id: 'global', token: '${username-global}' }
+];
 </script>
 
 <style scoped>
 .welcome {
-	position: relative;
-	display: grid;
-	grid-template-rows: auto auto 1fr;
-	gap: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	flex: 1;
 	min-width: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding: 18px;
+	padding: 18px 18px 14px;
 	background: var(--welcome-bg, linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 100%));
 	border-left: 1px solid var(--border);
-	scrollbar-width: thin;
-	scrollbar-color: var(--accent) var(--bg-elev-2);
 }
 
-.welcome::-webkit-scrollbar {
-	width: 10px;
-}
-
-.welcome::-webkit-scrollbar-track {
-	background: var(--bg-elev-2);
-	border-radius: 999px;
-}
-
-.welcome::-webkit-scrollbar-thumb {
-	background: var(--accent);
-	border-radius: 999px;
-	border: 2px solid var(--bg-elev-2);
-}
-
-.welcome::-webkit-scrollbar-thumb:hover {
-	background: var(--accent-strong);
-}
-
-.ambient {
-	position: absolute;
-	pointer-events: none;
-	border-radius: 999px;
-	filter: blur(22px);
-	opacity: var(--ambient-opacity, 0.35);
-}
-
-.ambient-a {
-	width: 140px;
-	height: 140px;
-	right: -40px;
-	top: -30px;
-	background: rgba(34, 197, 94, 0.4);
-}
-
-.ambient-b {
-	width: 120px;
-	height: 120px;
-	left: -40px;
-	bottom: 20px;
-	background: rgba(14, 165, 233, 0.35);
-}
-
+/* Hero */
 .hero {
-	position: relative;
-	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
 }
 
 .eyebrow {
@@ -127,96 +113,208 @@ const emit = defineEmits(['view-history']);
 .hero h1 {
 	margin: 0;
 	color: var(--text);
-	font-size: 18px;
+	font-size: 19px;
 	line-height: 1.2;
-	letter-spacing: 0.01em;
+	font-weight: 650;
 }
 
 .lead {
-	margin: 8px 0 0;
+	margin: 6px 0 12px;
 	color: var(--muted);
 	font-size: 12px;
-	line-height: 1.55;
-	max-width: 52ch;
+	line-height: 1.5;
+	max-width: 46ch;
 }
 
-.guide-grid {
-	position: relative;
-	z-index: 1;
+.hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* Sections */
+.block {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.block-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.block-title {
+	margin: 0;
+	color: var(--muted);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.block-hint {
+	color: var(--muted);
+	font-size: 10.5px;
+	opacity: 0.85;
+	text-align: right;
+}
+
+/* Insert methods */
+.methods {
 	display: grid;
-	gap: 10px;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
 }
 
-.guide-card {
+.method {
+	display: flex;
+	gap: 9px;
+	align-items: flex-start;
+	padding: 10px;
 	background: var(--bg-elev-2);
 	border: 1px solid var(--border);
-	border-radius: 10px;
-	padding: 10px;
-	box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.08);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
 }
 
-.guide-card h2 {
-	margin: 0;
+.method-icon {
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	border-radius: var(--radius-sm);
 	color: var(--accent);
-	font-size: 12px;
-	letter-spacing: 0.02em;
+	background: var(--accent-soft);
 }
 
-.guide-card p {
-	margin: 5px 0 8px;
+.method-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.method-icon--slash {
+	font-family: "Cascadia Code", "Consolas", monospace;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.method h3 {
+	margin: 0 0 3px;
+	color: var(--text);
+	font-size: 12px;
+	font-weight: 650;
+}
+
+.method p {
+	margin: 0;
 	color: var(--muted);
 	font-size: 11px;
-	line-height: 1.45;
+	line-height: 1.4;
 }
 
-.guide-card code {
-	display: block;
+/* Variable reference */
+.vars {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	background: var(--bg-elev-2);
+	box-shadow: var(--shadow-sm);
+	overflow: hidden;
+}
+
+.var {
+	display: grid;
+	grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+	gap: 10px;
+	align-items: center;
+	padding: 7px 10px;
+}
+
+.var + .var {
+	border-top: 1px solid var(--border);
+}
+
+.var-label {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.var-name {
 	color: var(--text);
-	font-size: 11px;
+	font-size: 12px;
+	font-weight: 650;
+}
+
+.var-desc {
+	color: var(--muted);
+	font-size: 10.5px;
+	line-height: 1.35;
+}
+
+.var-token {
+	justify-self: stretch;
+	padding: 4px 6px;
+	color: var(--accent);
+	background: var(--code-bg);
+	border: 1px solid var(--code-border);
+	border-radius: var(--radius-sm);
+	font-size: 10.5px;
 	line-height: 1.4;
 	overflow-wrap: anywhere;
-	font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
-	background: var(--bg);
-	border: 1px dashed var(--border);
-	border-radius: 8px;
-	padding: 8px;
 }
 
-.tips {
-	position: relative;
-	z-index: 1;
-	display: grid;
-	gap: 6px;
-	align-content: end;
+/* Footer */
+.foot {
+	margin-top: auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding-top: 10px;
+	border-top: 1px solid var(--border);
 }
 
-.tip {
-	color: var(--accent);
-	background: var(--tip-bg, rgba(20, 83, 45, 0.25));
-	border: 1px solid var(--tip-border, rgba(34, 197, 94, 0.25));
-	border-radius: 8px;
-	padding: 7px 9px;
+.version {
+	color: var(--muted);
 	font-size: 11px;
-	line-height: 1.35;
 }
 
 .history-btn {
 	appearance: none;
-	border: 1px solid rgba(34, 197, 94, 0.38);
-	background: rgba(15, 23, 42, 0.65);
-	color: #bbf7d0;
-	border-radius: 8px;
-	padding: 8px 10px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 6px;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--accent);
+	font: inherit;
 	font-size: 11px;
 	font-weight: 700;
 	cursor: pointer;
-	transition: transform 120ms ease, background 160ms ease, color 160ms ease;
+	transition: background 160ms ease;
+}
+
+.history-btn svg {
+	width: 12px;
+	height: 12px;
+	transition: transform 160ms ease;
 }
 
 .history-btn:hover {
-	transform: translateY(-1px);
-	background: rgba(22, 163, 74, 0.18);
-	color: #ecfdf5;
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.history-btn:hover svg {
+	transform: translateX(2px);
 }
 
 .history-btn:focus-visible {
@@ -227,11 +325,11 @@ const emit = defineEmits(['view-history']);
 @media (max-width: 680px) {
 	.welcome {
 		padding: 14px;
-		gap: 12px;
+		gap: 14px;
 	}
 
 	.hero h1 {
-		font-size: 16px;
+		font-size: 17px;
 	}
 }
 </style>

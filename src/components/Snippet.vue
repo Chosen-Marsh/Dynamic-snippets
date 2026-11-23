@@ -100,7 +100,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, watch, onBeforeUnmount, onMounted, computed, nextTick } from 'vue';
 import Snippets from '../services/Snippets.js';
@@ -431,33 +430,11 @@ onMounted(() => {
   line-height: 1.65;
   caret-color: var(--accent);
   -webkit-user-drag: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) var(--bg-elev-2);
 }
 
 .snippet-textarea::placeholder {
   color: var(--muted);
   font-style: italic;
-}
-
-.snippet-textarea::-webkit-scrollbar {
-  width: 10px;
-}
-
-.snippet-textarea::-webkit-scrollbar-track {
-  background: var(--bg-elev-2);
-  border-radius: 999px;
-  margin: 6px 0;
-}
-
-.snippet-textarea::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 99px;
-  border: 2px solid var(--bg-elev-2);
-}
-
-.snippet-textarea::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-strong);
 }
 
 .status {
@@ -491,7 +468,7 @@ onMounted(() => {
   list-style: none;
   margin: 0;
   min-width: 140px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow);
 }
 
 .editor-ctx-item {

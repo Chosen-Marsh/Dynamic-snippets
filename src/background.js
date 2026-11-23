@@ -2,7 +2,7 @@ import { snippetPayloadByMenuId, rebuildContextMenu, lookupSnippetContent } from
 import { resolveSnippetVariables } from './background/variableResolver.js';
 import { resolveGlobalVariablesInText } from './background/resolveGlobalVariables.js';
 import { insertSnippetText } from './background/snippetInserter.js';
-import { track } from './services/Analytics.js';
+import { track, flushAnalytics } from './services/Analytics.js';
 import { ensureInstalledAt } from './services/InstallTracking.js';
 import { hasVariableTokens } from './variables/tokenParser.js';
 import { getBackgroundMessages, getContentMessages, SETTINGS_KEY } from './background/messages.js';
@@ -64,10 +64,13 @@ function queueRebuildContextMenu() {
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureInstalledAt();
   queueRebuildContextMenu();
+  flushAnalytics();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   queueRebuildContextMenu();
+  // Ship anything queued in a previous browser session.
+  flushAnalytics();
 });
 
 // The content script can't import locale files, so keep its strings in storage in sync with the language.

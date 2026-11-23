@@ -132,26 +132,6 @@ watch(() => props.visible, async (isVisible) => {
 	backdrop-filter: blur(4px);
 	padding: 16px;
 	overflow-y: auto;
-	scrollbar-width: thin;
-	scrollbar-color: rgba(34, 197, 94, 0.72) rgba(15, 23, 42, 0.35);
-}
-
-.var-modal-overlay::-webkit-scrollbar {
-	width: 10px;
-}
-
-.var-modal-overlay::-webkit-scrollbar-track {
-	background: rgba(15, 23, 42, 0.35);
-}
-
-.var-modal-overlay::-webkit-scrollbar-thumb {
-	background: linear-gradient(180deg, rgba(34, 197, 94, 0.72), rgba(22, 163, 74, 0.78));
-	border-radius: 999px;
-	border: 2px solid rgba(15, 23, 42, 0.35);
-}
-
-.var-modal-overlay::-webkit-scrollbar-thumb:hover {
-	background: linear-gradient(180deg, rgba(74, 222, 128, 0.86), rgba(34, 197, 94, 0.92));
 }
 
 .var-modal {
@@ -203,28 +183,6 @@ watch(() => props.visible, async (isVisible) => {
 	gap: 10px;
 	overflow-y: auto;
 	min-height: 0;
-	scrollbar-width: thin;
-	scrollbar-color: rgba(34, 197, 94, 0.72) rgba(15, 23, 42, 0.4);
-}
-
-.var-modal-body::-webkit-scrollbar {
-	width: 10px;
-}
-
-.var-modal-body::-webkit-scrollbar-track {
-	background: rgba(15, 23, 42, 0.4);
-	border-radius: 999px;
-	margin: 8px 0;
-}
-
-.var-modal-body::-webkit-scrollbar-thumb {
-	background: linear-gradient(180deg, rgba(34, 197, 94, 0.72), rgba(22, 163, 74, 0.78));
-	border-radius: 999px;
-	border: 2px solid rgba(15, 23, 42, 0.4);
-}
-
-.var-modal-body::-webkit-scrollbar-thumb:hover {
-	background: linear-gradient(180deg, rgba(74, 222, 128, 0.86), rgba(34, 197, 94, 0.92));
 }
 
 .field {

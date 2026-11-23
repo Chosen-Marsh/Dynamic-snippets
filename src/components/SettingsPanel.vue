@@ -1,13 +1,18 @@
 <template>
-  <teleport to="body">
-    <div v-if="visible" class="settings-overlay" @mousedown.self="close">
-      <section class="settings-modal"       role="dialog" aria-modal="true" :aria-label="$t('settings.title')">
+  <section class="settings" :aria-label="$t('settings.title')">
         <header class="settings-header">
-                <h3>{{ $t('settings.title') }}</h3>
-                <button class="settings-close" type="button" @click="close" :aria-label="$t('common.close')">x</button>
+          <div>
+            <p class="eyebrow">{{ $t('app.name') }}</p>
+            <h1>{{ $t('settings.title') }}</h1>
+          </div>
+          <button class="settings-close" type="button" @click="close" :aria-label="$t('common.close')" :title="$t('common.close')">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </button>
         </header>
 
-              <nav class="settings-tabs" :aria-label="$t('settings.sections')">
+        <nav class="settings-tabs" :aria-label="$t('settings.sections')">
           <button
             type="button"
             class="settings-tab"
@@ -136,15 +141,14 @@
 
             <p v-else class="globals-empty">{{ $t('settings.globals.empty') }}</p>
 
-                        <button type="button" class="btn btn-add" @click="addGlobalVarRow">{{ $t('settings.globals.add') }}</button>
+          <button type="button" class="btn btn-add" @click="addGlobalVarRow">{{ $t('settings.globals.add') }}</button>
           </div>
         </div>
 
         <footer class="settings-footer">
-                      <button class="btn btn-ghost" type="button" @click="close">{{ $t('common.cancel') }}</button>
-                      <button class="btn btn-primary" type="button" @click="handleSave">{{ $t('common.save') }}</button>
+          <button class="btn btn-ghost" type="button" @click="close">{{ $t('common.cancel') }}</button>
+          <button class="btn btn-primary" type="button" @click="handleSave">{{ $t('common.save') }}</button>
         </footer>
-      </section>
 
       <div
         v-if="importDialog.visible"
@@ -224,12 +228,11 @@
           </footer>
         </section>
       </div>
-    </div>
-  </teleport>
+  </section>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import settings, { DEFAULTS } from '../services/Settings.js';
 import globalVariables from '../services/GlobalVariables.js';
 import { isAnalyticsEnabled, setConsent } from '../services/AnalyticsConsent.js';
@@ -240,10 +243,6 @@ import { t, getAvailableLocales } from '../i18n/index.js';
 const availableLocales = getAvailableLocales();
 
 const snippetManager = Snippets;
-
-const props = defineProps({
-  visible: { type: Boolean, default: false }
-});
 
 const emit = defineEmits(['close', 'saved', 'import-completed', 'export-completed']);
 
@@ -341,14 +340,26 @@ function removeGlobalVarRow(index) {
   globalVarRows.value.splice(index, 1);
 }
 
-watch(() => props.visible, async (isVisible) => {
-  if (!isVisible) return;
-  activeTab.value = 'general';
+function onKeydown(event) {
+  if (event.key !== 'Escape' || event.defaultPrevented) return;
+  if (importDialog.value.visible) {
+    closeImportDialog();
+    return;
+  }
+  close();
+}
+
+onMounted(async () => {
+  window.addEventListener('keydown', onKeydown);
   const current = await settings.get();
   form.value = { ...current };
   analyticsEnabled.value = isAnalyticsEnabled();
   const globals = await globalVariables.getAll();
   globalVarRows.value = Object.entries(globals).map(([key, value]) => ({ key, value }));
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown);
 });
 
 async function handleSave() {
@@ -371,53 +382,61 @@ function close() {
 </script>
 
 <style scoped>
-.settings-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
-  padding: 16px;
-}
-
-.settings-modal {
-  width: min(520px, 100%);
-  max-height: calc(100dvh - 32px);
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-elev);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+.settings {
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  background: var(--welcome-bg, linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 100%));
 }
 
 .settings-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  padding: 18px 18px 12px;
 }
 
-.settings-header h3 {
-  margin: 0;
-  font-size: 14px;
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   font-weight: 700;
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 650;
   color: var(--text);
 }
 
 .settings-close {
+  display: grid;
+  place-items: center;
   border: none;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: 13px;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
+}
+
+.settings-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.settings-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .settings-close:hover {
@@ -428,7 +447,7 @@ function close() {
 .settings-tabs {
   display: flex;
   gap: 4px;
-  padding: 8px 14px 0;
+  padding: 0 18px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -452,7 +471,8 @@ function close() {
 }
 
 .settings-body {
-  padding: 14px;
+  flex: 1;
+  padding: 14px 18px;
   overflow-y: auto;
   min-height: 0;
 }
@@ -477,18 +497,25 @@ function close() {
 
 .field-input {
   width: 100%;
+  height: 34px;
   border: 1px solid var(--border);
-  background: var(--bg-elev-2);
+  background: var(--bg-input);
   color: var(--text);
-  border-radius: 8px;
-  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  padding: 0 10px;
   outline: none;
   font-size: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.field-input:hover {
+  border-color: var(--border-strong);
 }
 
 .field-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+  box-shadow: var(--focus-ring);
 }
 
 .toggle-field {
@@ -497,7 +524,7 @@ function close() {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--bg-elev-2);
 }
@@ -515,18 +542,24 @@ function close() {
 
 .toggle {
   position: relative;
-  width: 42px;
-  height: 24px;
+  width: 38px;
+  height: 22px;
   flex-shrink: 0;
-  border: 1px solid var(--border);
+  padding: 0;
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: var(--bg);
+  background: var(--bg-hover);
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .toggle--on {
-  background: rgba(34, 197, 94, 0.25);
+  background: var(--accent);
   border-color: var(--accent);
 }
 
@@ -534,23 +567,23 @@ function close() {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--muted);
-  transition: transform 160ms ease, background 160ms ease;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 180ms cubic-bezier(.2, .8, .2, 1);
 }
 
 .toggle--on .toggle-thumb {
-  transform: translateX(18px);
-  background: var(--accent);
+  transform: translateX(16px);
 }
 
 .data-tools {
   display: grid;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--bg-elev-2);
 }
@@ -571,7 +604,8 @@ function close() {
 .import-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(6, 9, 16, 0.55);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(3px);
   display: grid;
   place-items: center;
   z-index: 4;
@@ -597,7 +631,7 @@ function close() {
 }
 
 .import-modal--closing-merge {
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35), var(--shadow);
+  box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow);
 }
 
 .import-modal--closing-overwrite {
@@ -663,13 +697,13 @@ function close() {
 }
 
 .import-warning-box {
-  border-color: #eab308;
-  background: rgba(234, 179, 8, 0.08);
+  border-color: var(--warning);
+  background: var(--warning-soft);
 }
 
 .import-error-box {
   border-color: var(--danger);
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--danger-soft);
 }
 
 .import-modal-footer {
@@ -767,8 +801,8 @@ function close() {
 }
 
 .globals-remove:hover {
-  color: var(--danger, #f87171);
-  border-color: var(--danger, #f87171);
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .globals-empty {
@@ -795,7 +829,7 @@ function close() {
 
 .settings-footer {
   border-top: 1px solid var(--border);
-  padding: 12px 14px;
+  padding: 10px 18px;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -818,9 +852,9 @@ function close() {
 }
 
 .btn-primary {
-  color: #ecfdf5;
+  color: var(--accent-contrast);
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.28);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .btn-ghost {

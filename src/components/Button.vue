@@ -66,12 +66,12 @@ const resolvedIcon = computed(() => {
 .btn {
     appearance: none;
     border: 1px solid transparent;
-    border-radius: 6px;
-    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    padding: 7px 11px;
     font-size: 12px;
     font-weight: 600;
     line-height: 1;
-    color: #f9fafb;
+    color: var(--accent-contrast);
     cursor: pointer;
     transition: transform 120ms ease, box-shadow 180ms ease, background-color 180ms ease;
     display: inline-flex;
@@ -103,8 +103,8 @@ const resolvedIcon = computed(() => {
 }
 
 .btn:focus-visible {
-    outline: 2px solid rgba(34, 197, 94, 0.55);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
 .btn:disabled {
@@ -114,17 +114,22 @@ const resolvedIcon = computed(() => {
 
 .btn-primary {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.24);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 26%, transparent);
 }
 
 .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 10px 24px rgba(34, 197, 94, 0.3);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 34%, transparent);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-strong) 100%);
-    border-color: #475569;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.36);
+    color: var(--text);
+    background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-strong) 100%);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
 }
 
 .btn-ghost {
@@ -145,6 +150,7 @@ const resolvedIcon = computed(() => {
 
 .btn-danger {
     background: linear-gradient(135deg, var(--danger) 0%, var(--danger-strong) 100%);
-    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
+    color: #ffffff;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--danger) 28%, transparent);
 }
 </style>
