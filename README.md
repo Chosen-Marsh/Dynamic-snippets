@@ -10,7 +10,7 @@
 
 <br />
 
-<img src="images/Welcome.png" alt="Dynamic Snippets Welcome" width="600" />
+<img src="images/Welcome.png" alt="Dynamic Snippets welcome page" width="600" />
 
 </div>
 
@@ -37,12 +37,16 @@
 <div align="center">
 <table>
 <tr>
-<td align="center"><img src="images/Snippet.png" width="380" /><br /><b>Snippet Editor</b></td>
-<td align="center"><img src="images/Var.png" width="380" /><br /><b>Variable Builder</b></td>
+<td align="center"><img src="images/Snippet.png" width="380" alt="Snippet editor with a slash command" /><br /><b>Snippet Editor</b></td>
+<td align="center"><img src="images/Var-input.png" width="380" alt="Form for filling in snippet variables" /><br /><b>Fill In Variables</b></td>
 </tr>
 <tr>
-<td align="center"><img src="images/Var-input.png" width="380" /><br /><b>Variable Input Prompt</b></td>
-<td align="center"><img src="images/Welcome.png" width="380" /><br /><b>Welcome Screen</b></td>
+<td align="center"><img src="images/Var.png" width="380" alt="Variable builder dialog" /><br /><b>Variable Builder</b></td>
+<td align="center"><img src="images/Settings.png" width="380" alt="Settings pane" /><br /><b>Settings</b></td>
+</tr>
+<tr>
+<td align="center"><img src="images/Onboarding.png" width="380" alt="First-run guided tour" /><br /><b>Guided Tour</b></td>
+<td align="center"><img src="images/Snippet-light.png" width="380" alt="Snippet editor in the light theme" /><br /><b>Light Theme</b></td>
 </tr>
 </table>
 </div>
